@@ -1,0 +1,7 @@
+{
+  "IPAddress": "192.168.1.106",
+  "NodePort": 50000,
+  "TCP_Stream_Port": 50002,
+  "Live_Stream_Port": 50003,
+  "Device": "/dev/video2"
+}
