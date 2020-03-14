@@ -103,9 +103,9 @@ export class LivestreamController {
     // console.log('cam settings:');
     // console.log(param.camSettings);
     child.exec(param.camSettings, (error, stdout, stderr) => {
-      if (error) console.log(error);
-      if (stdout) console.log(stdout);
-      if (stderr) console.log(stderr);
+      if (error) console.log('process error: ' + error);
+      if (stdout) console.log('stdout: ' + stdout);
+      if (stderr) console.log('stderr: ' + stderr);
     });
   }
 
