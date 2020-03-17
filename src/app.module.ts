@@ -1,11 +1,20 @@
 import { Module } from '@nestjs/common';
-import { VideoController } from './VideoCtrl/video.controller';
-import { LivestreamController } from './LivestreamCtrl/livestream.controller';
-import { DataController } from './DataCtrl/Data.controller';
+import { DataBaseModule } from './database/database.module';
+import { WebcamModule } from './webcam/webcam.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports: [],
-  controllers: [VideoController, LivestreamController, DataController],
+  imports: [
+    DataBaseModule,
+    WebcamModule,
+    TypeOrmModule.forRoot({
+      type: 'sqlite',
+      database: './data/camData.sql',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+    }),
+  ],
+  controllers: [],
   providers: [],
 })
 export class AppModule {}

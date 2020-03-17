@@ -6,13 +6,14 @@ import * as socketio from 'socket.io';
 import * as http from 'http';
 import * as net from 'net';
 import * as Dicer from 'dicer';
+import { LiveStreamService } from '../services/livestream/livestream.service';
 
 class Data {
   camSettings: string;
 }
 
 @Controller('/livestream')
-export class LivestreamController {
+export class LiveStreamController {
   NodeAddress: string;
   StreamPort: number;
   videoSocket: net.Socket;
@@ -23,22 +24,19 @@ export class LivestreamController {
   SettingsProc!: child.ChildProcess;
   clientCounter: number;
   isRecording: boolean;
-  constructor() {
+  constructor(private livestreamService: LiveStreamService) {
     this.clientCounter = 0;
-    // this.videoSocket = new net.Socket();
     this.videoSocket = null;
-    this.commSocket = new net.Socket();
-    this.dicer = new Dicer({ boundary: '--videoboundary' });
+    this.isRecording = false;
     const rawdata = fs.readFileSync('./src/appconfig.json');
     const attributes = JSON.parse(rawdata.toString());
     this.NodeAddress = attributes['IPAddress'];
-    this.StreamPort = attributes['TCP_Stream_Port'];
+    this.StreamPort = 50002;
     process.on('SIGINT', () => {
       console.log('node received SIGINT');
       if (this.isRecording) this.cleanExit();
+      process.exit();
     });
-
-    // this.startRecording();
   }
 
   cleanExit(): void {
@@ -93,6 +91,7 @@ export class LivestreamController {
 
   @Get('/create')
   createCommSocket(): void {
+    this.commSocket = new net.Socket();
     this.commSocket.connect(10000, this.NodeAddress, () => {
       console.log('Connected to python server');
     });
@@ -100,8 +99,6 @@ export class LivestreamController {
 
   @Post('/CamSettings')
   updateCamSettings(@Body() param: Data): void {
-    // console.log('cam settings:');
-    // console.log(param.camSettings);
     child.exec(param.camSettings, (error, stdout, stderr) => {
       if (error) console.log('process error: ' + error);
       if (stdout) console.log('stdout: ' + stdout);
@@ -143,6 +140,7 @@ export class LivestreamController {
       this.io = socketio.listen(
         http.createServer().listen(50003, this.NodeAddress),
       );
+      this.dicer = new Dicer({ boundary: '--videoboundary' });
       //Dicer object will parse video data
       this.dicer.on('part', this.onPartReceive);
 
@@ -171,6 +169,7 @@ export class LivestreamController {
     console.log('client: ' + this.clientCounter);
     if (this.clientCounter === 0) {
       this.io.close();
+      this.dicer.destroy();
       if (this.videoSocket != null) {
         this.commSocket.write('stop');
         this.videoSocket.removeAllListeners();

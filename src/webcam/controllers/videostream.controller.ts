@@ -1,18 +1,18 @@
 import { Controller, Get, Res, Param, Header, Req } from '@nestjs/common';
 import { Response, Request } from 'express';
 import * as child from 'child_process';
+import {
+  VideoStreamService,
+  DirInfo,
+} from '../services/videostream/videostream.service';
 import * as fs from 'fs';
 
-interface DirInfo {
-  data: string[];
-}
-
 @Controller('/videos')
-export class VideoController {
+export class VideoStreamController {
   imageBasepath: string;
   videoBasepath: string;
   maxchunksize: number;
-  constructor() {
+  constructor(private videostreamService: VideoStreamService) {
     this.imageBasepath = './data/Thumbnail/';
     this.videoBasepath = './data/Recordings/';
     this.maxchunksize = 1024 * 1024;
@@ -24,11 +24,10 @@ export class VideoController {
   }
   // Return video list
   @Get('/dir')
-  getdirs(): DirInfo {
-    return {
-      data: fs.readdirSync('./data/Recordings'),
-    };
+  getdirs(): Promise<DirInfo> {
+    return this.videostreamService.getFiles();
   }
+
   @Get('/thumbnail/:img')
   @Header('Content-Type', 'image/jpg')
   getImage(@Param('img') img: string, @Res() res: Response): void {
@@ -54,18 +53,9 @@ export class VideoController {
   deleteFiles(@Param('path') path: string): void {
     const videoPath = this.videoBasepath + path + '.mp4';
     const imagePath = this.imageBasepath + path + '.jpg';
-    this.deleteFile(videoPath);
-    this.deleteFile(imagePath);
+    this.videostreamService.deleteFiles(imagePath, videoPath);
   }
-  deleteFile(filename: string): void {
-    fs.exists(filename, exists => {
-      if (exists) {
-        fs.unlink(filename, err => {
-          if (err) console.log(err);
-        });
-      }
-    });
-  }
+
   // Stream the videos in chunks of 2MB
   @Get('/showvideo/:vid')
   getVideo(
@@ -87,18 +77,16 @@ export class VideoController {
 
       //Set max chunksize to 2 MB
       if (chunksize > this.maxchunksize) {
-        end = start + this.maxchunksize * 2 - 1;
+        end = start + this.maxchunksize - 1;
         chunksize = end - start + 1;
       }
       //Write the header for the HTTP response
-      const head = {
+      res.writeHead(206, {
         'Content-Range': `bytes ${start}-${end}/${fileSize}`,
         'Accept-Ranges': 'bytes',
         'Content-Length': chunksize,
         'Content-Type': 'video/mp4',
-      };
-
-      res.writeHead(206, head);
+      });
 
       //Open the file stream
       const fileStream = fs
@@ -108,8 +96,10 @@ export class VideoController {
         })
         .on('error', err => {
           res.end(err);
+          fileStream.destroy();
         });
     } else {
+      console.log('else');
       const head = {
         'Content-Length': fileSize,
         'Content-Type': 'video/mp4',
