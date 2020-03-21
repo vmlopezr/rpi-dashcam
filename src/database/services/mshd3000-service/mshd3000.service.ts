@@ -10,10 +10,10 @@ export class MSHD3000Service {
     private camRepository: Repository<MSHD3000Data>,
   ) {}
 
-  async update(data: MSHD3000Data): Promise<UpdateResult> {
+  async update(data: Partial<MSHD3000Data>): Promise<UpdateResult> {
     return await this.camRepository.update(data.id, data);
   }
-  async findAll(): Promise<MSHD3000Data[]> {
-    return await this.camRepository.find();
+  async retrieveData(): Promise<MSHD3000Data[]> {
+    return await this.camRepository.find({ id: 1 });
   }
 }

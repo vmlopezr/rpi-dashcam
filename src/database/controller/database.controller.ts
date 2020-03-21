@@ -7,6 +7,7 @@ import { AppSettings } from '../services/app-settings-service/app-settings.entit
 import { DefaultCamData } from '../services/default-cam-service/default-cam.entity';
 import { LogitechC920Data } from '../services/logitech-c920-service/logitech-c920.entity';
 import { MSHD3000Data } from '../services/mshd3000-service/MSHD3000.entity';
+
 @Controller('app-settings')
 export class DataBaseController {
   constructor(
@@ -17,50 +18,43 @@ export class DataBaseController {
   ) {}
   @Get('/settings/data')
   getAppSettings(): Promise<AppSettings[]> {
-    return this.settingsService.findAll();
+    return this.settingsService.retrieveData();
   }
   @Get('/defaultCam/data')
   getDefaultCamData(): Promise<DefaultCamData[]> {
-    return this.defaultCamService.findAll();
+    return this.defaultCamService.retrieveData();
   }
   @Get('/logitechC920/data')
   getLogitechC920Data(): Promise<LogitechC920Data[]> {
-    return this.logitechC920Service.findAll();
+    return this.logitechC920Service.retrieveData();
   }
   @Get('/mshd3000/data')
   getMSHD3000Data(): Promise<MSHD3000Data[]> {
-    return this.msdh3000Service.findAll();
+    return this.msdh3000Service.retrieveData();
   }
-  @Put('/settings/update/:id')
-  async updateAppSettings(
-    @Param('id') id,
-    @Body() data: AppSettings,
-  ): Promise<void> {
-    data.id = id;
-    this.settingsService.update(data);
+  @Put('/settings/update')
+  async updateAppSettings(@Body() data: Partial<AppSettings>): Promise<void> {
+    data.id = 1;
+    await this.settingsService.update(data);
   }
-  @Put('/defaultCam/update/:id')
+  @Put('/defaultCam/update')
   async updateDefaultCamSettings(
-    @Param('id') id,
-    @Body() data: DefaultCamData,
+    @Body() data: Partial<DefaultCamData>,
   ): Promise<void> {
-    data.id = id;
+    data.id = 1;
     this.defaultCamService.update(data);
   }
-  @Put('/logitechC920/update/:id')
+  @Put('/logitechC920/update')
   async updateLogitechC920Data(
-    @Param('id') id,
-    @Body() data: LogitechC920Data,
+    @Body() data: Partial<LogitechC920Data>,
   ): Promise<void> {
-    data.id = id;
+    data.id = 1;
     this.logitechC920Service.update(data);
   }
-  @Put('/settings/update/:id')
-  async updateMSHD3000Data(
-    @Param('id') id,
-    @Body() data: MSHD3000Data,
-  ): Promise<void> {
-    data.id = id;
+  @Put('/mshd3000/update')
+  async updateMSHD3000Data(@Body() data: Partial<MSHD3000Data>): Promise<void> {
+    data.id = 1;
     this.msdh3000Service.update(data);
+    console.log(data);
   }
 }

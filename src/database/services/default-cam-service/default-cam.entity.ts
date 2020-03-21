@@ -58,4 +58,7 @@ export class DefaultCamData {
 
   @Column()
   backlightComp: number;
+
+  @Column()
+  verticalFlip: number;
 }

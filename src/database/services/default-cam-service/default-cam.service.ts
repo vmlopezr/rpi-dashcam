@@ -9,10 +9,10 @@ export class DefaultCamService {
     @InjectRepository(DefaultCamData)
     private camRepository: Repository<DefaultCamData>,
   ) {}
-  async update(settings: DefaultCamData): Promise<UpdateResult> {
+  async update(settings: Partial<DefaultCamData>): Promise<UpdateResult> {
     return await this.camRepository.update(settings.id, settings);
   }
-  async findAll(): Promise<DefaultCamData[]> {
-    return await this.camRepository.find();
+  async retrieveData(): Promise<DefaultCamData[]> {
+    return await this.camRepository.find({ id: 1 });
   }
 }

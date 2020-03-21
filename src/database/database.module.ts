@@ -26,5 +26,11 @@ import { MSHD3000Data } from './services/mshd3000-service/MSHD3000.entity';
     MSHD3000Service,
   ],
   controllers: [DataBaseController],
+  exports: [
+    AppSettingsService,
+    DefaultCamService,
+    LogitechC920Service,
+    MSHD3000Service,
+  ],
 })
 export class DataBaseModule {}

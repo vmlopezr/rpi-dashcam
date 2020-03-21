@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Controller, Get, Res, Param, Header, Req } from '@nestjs/common';
+import { Response, Request } from 'express';
 import * as fs from 'fs';
+import * as child from 'child_process';
 import { promisify } from 'util';
 
 function readDir(directory: string): Promise<string[]> {
@@ -9,23 +10,82 @@ function readDir(directory: string): Promise<string[]> {
 export interface DirInfo {
   data: string[];
 }
-
+const maxchunksize = 1024 * 1024;
 @Injectable()
 export class VideoStreamService {
-  maxchunksize: number;
-  imageBasepath: string;
-  constructor() {
-    this.maxchunksize = 1024 * 1024;
-    this.imageBasepath = './data/Thumbnail/';
-  }
-
   async getFiles(): Promise<DirInfo> {
     return { data: await readDir('./data/Recordings') };
   }
+  async serveImage(res: Response, image: string): Promise<void> {
+    const imagepath = `./data/Thumbnail/${image}`;
 
-  deleteFiles(image: string, video: string): void {
-    this.deleteFile(image);
-    this.deleteFile(video);
+    fs.exists(imagepath, (exists: boolean) => {
+      if (exists) fs.createReadStream(imagepath).pipe(res);
+      else fs.createReadStream('./data/Thumbnail/default-image.jpg').pipe(res);
+    });
+  }
+  async clientDownload(res: Response, filename: string): Promise<void> {
+    const videoPath = `./data/Recordings/${filename}`;
+
+    res.download(videoPath, error => {
+      if (error) {
+        console.log(error);
+        res.status(404).send('File Not Found');
+      }
+    });
+  }
+  shutDown(): void {
+    child.spawn('sh', ['./src/cleanShutDown.sh']);
+  }
+  // Stream the videos in chunks of 2MB
+  streamVideo(req: Request, res: Response, filename: string): void {
+    const path = `./data/Recordings/${filename}`;
+    const stat = fs.statSync(path);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      let end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      let chunksize = end - start + 1;
+
+      //Set max chunksize to 1 MB
+      if (chunksize > maxchunksize) {
+        end = start + maxchunksize - 1;
+        chunksize = end - start + 1;
+      }
+      //Write the header for the HTTP response
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': `${chunksize}`,
+        'Content-Type': 'video/mp4',
+      });
+
+      //Open the file stream
+      const options = { start: start, end: end, autoClose: true };
+      const fileStream = fs.createReadStream(path, options);
+      fileStream.on('open', () => {
+        fileStream.pipe(res);
+      });
+      fileStream.on('error', err => {
+        res.end(err);
+        fileStream.destroy();
+      });
+    } else {
+      const head = {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(200, head);
+      fs.createReadStream(path).pipe(res);
+    }
+  }
+  deleteFiles(filename: string): void {
+    const videoPath = `./data/Recordings/${filename}.mp4`;
+    const imagePath = `./data/Thumbnail/${filename}.jpg`;
+    this.deleteFile(imagePath);
+    this.deleteFile(videoPath);
   }
 
   deleteFile(filename: string): void {

@@ -58,4 +58,7 @@ export class LogitechC920Data {
 
   @Column()
   backlightComp: number;
+
+  @Column()
+  verticalFlip: number;
 }

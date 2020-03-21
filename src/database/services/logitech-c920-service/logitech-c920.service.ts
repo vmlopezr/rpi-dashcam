@@ -10,10 +10,10 @@ export class LogitechC920Service {
     private camRepository: Repository<LogitechC920Data>,
   ) {}
 
-  async update(data: LogitechC920Data): Promise<UpdateResult> {
+  async update(data: Partial<LogitechC920Data>): Promise<UpdateResult> {
     return await this.camRepository.update(data.id, data);
   }
-  async findAll(): Promise<LogitechC920Data[]> {
-    return await this.camRepository.find();
+  async retrieveData(): Promise<LogitechC920Data[]> {
+    return await this.camRepository.find({ id: 1 });
   }
 }

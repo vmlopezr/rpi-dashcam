@@ -46,4 +46,7 @@ export class MSHD3000Data {
 
   @Column()
   zoomAbsolute: number;
+
+  @Column()
+  verticalFlip: number;
 }

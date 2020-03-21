@@ -10,10 +10,10 @@ export class AppSettingsService {
     private appSettingsRepo: Repository<AppSettings>,
   ) {}
 
-  async update(settings: AppSettings): Promise<UpdateResult> {
+  async update(settings: Partial<AppSettings>): Promise<UpdateResult> {
     return await this.appSettingsRepo.update(settings.id, settings);
   }
-  async findAll(): Promise<AppSettings[]> {
-    return await this.appSettingsRepo.find();
+  async retrieveData(): Promise<AppSettings[]> {
+    return await this.appSettingsRepo.find({ id: 1 });
   }
 }

@@ -29,6 +29,9 @@ else:
 Caps = 'image/jpeg,width=1280,height=720,framerate=15/1 '
 IP_Address = sys.argv[1]
 PORT = int(sys.argv[2])
+CAMERA = sys.argv[3]
+DEVICE = sys.argv[4]
+videoLength = int(sys.argv[5])
 
 
 class WebcamRecord():
