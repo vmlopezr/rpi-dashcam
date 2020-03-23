@@ -34,4 +34,6 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 *.mp4
-*.jpg
+data/Thumbnail/*
+!data/Thumbnail/default-image.jpg
+!data/Thumbnail/.gitkeep
