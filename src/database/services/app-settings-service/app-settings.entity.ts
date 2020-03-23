@@ -22,6 +22,7 @@ export class AppSettings {
 
   @Column()
   LiveStreamPort: number;
+
   @Column()
-  videoLength: number;
+  recordingState: string;
 }

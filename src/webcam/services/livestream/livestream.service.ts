@@ -5,8 +5,15 @@ import * as http from 'http';
 import * as net from 'net';
 import * as Dicer from 'dicer';
 import { AppSettingsService } from '../../../database/services/app-settings-service/app-settings.service';
+import { DefaultCamService } from '../../../database/services/default-cam-service/default-cam.service';
+import { LogitechC920Service } from '../../../database/services/logitech-c920-service/logitech-c920.service';
+import { MSHD3000Service } from '../../../database/services/mshd3000-service/mshd3000.service';
 export interface Data {
   camSettings: string;
+}
+interface CamInfo {
+  videoLength: number;
+  verticalFlip: number;
 }
 
 @Injectable()
@@ -22,9 +29,18 @@ export class LiveStreamService {
   SettingsProc!: child.ChildProcess;
   clientCounter: number;
   isRecording: boolean;
-  constructor(private appSettingsService: AppSettingsService) {
+  errCount: number;
+  constructor(
+    private appSettingsService: AppSettingsService,
+    private defaultCamService: DefaultCamService,
+    private logitechC920Service: LogitechC920Service,
+    private mshd3000Service: MSHD3000Service,
+  ) {
     this.clientCounter = 0;
+    this.errCount = 0;
     this.tcpStreamSocket = null;
+    this.StreamProc = null;
+    this.frontEndStreamProvider = null;
     this.isRecording = false;
     this.initializeNetworkData();
     process.on('SIGINT', () => {
@@ -46,23 +62,24 @@ export class LiveStreamService {
       process.exit();
     });
   }
-  startLiveStreamServer(): void {
-    console.log('start: ' + this.clientCounter);
-    if (this.clientCounter === 0) {
-      this.pythonSocket.write('start');
-      this.tcpStreamSocket = new net.Socket();
-    }
-    this.clientCounter++;
 
-    // Start livestream socket
-    if (!this.tcpStreamSocket.writable) {
-      setTimeout(() => {
-        this.setVideoSocketListeners();
-      }, 1000);
-    }
+  // Communicates to the python process to start the LiveStream server
+  startLiveStreamServer(): void {
+    if (!this.tcpStreamSocket) this.pythonSocket.write('start');
+    this.clientCounter++;
+  }
+
+  // Creates the socket when the python process successfully starts the livestream server.
+  // This is caught by the process stdout listener
+  startLiveStreamSocket(): void {
+    this.tcpStreamSocket = new net.Socket();
+    this.setVideoSocketListeners();
   }
   stopLiveStreamServer(): void {
     this.clientCounter = this.clientCounter - 1;
+    if (this.errCount > 0) {
+      this.clientCounter = 0;
+    }
     console.log('client: ' + this.clientCounter);
     if (this.clientCounter === 0) {
       this.frontEndStreamProvider.close();
@@ -104,38 +121,44 @@ export class LiveStreamService {
       this.frontEndStreamProvider?.emit('image', frameEncoded);
     });
   };
-  stopRecording(): void {
-    this.isRecording = false;
-    if (this.StreamProc) {
-      this.StreamProc.on('exit', () => {
-        console.log('process exited ');
-      });
-      this.StreamProc.kill('SIGINT');
-    }
-    if (this.frontEndStreamProvider) {
-      this.frontEndStreamProvider.close();
-    }
 
-    if (this.tcpStreamSocket != null) {
-      this.pythonSocket.write('stop');
-      this.tcpStreamSocket.removeAllListeners();
-      this.tcpStreamSocket.destroy();
-      this.tcpStreamSocket = null;
+  async getVideoOrientation(camera: string): Promise<CamInfo> {
+    if (camera === 'Logitech Webcam HD C920') {
+      const data = await this.logitechC920Service.retrieveData();
+      return {
+        verticalFlip: data[0].verticalFlip,
+        videoLength: data[0].videoLength,
+      };
+    } else if (camera === 'Microsoft LifeCam HD-3000') {
+      const data = await this.mshd3000Service.retrieveData();
+      return {
+        verticalFlip: data[0].verticalFlip,
+        videoLength: data[0].videoLength,
+      };
+    } else {
+      const data = await this.defaultCamService.retrieveData();
+      return {
+        verticalFlip: data[0].verticalFlip,
+        videoLength: data[0].videoLength,
+      };
     }
   }
   async startRecording(): Promise<void> {
+    // Retrieve DB data
     const configData = await this.appSettingsService.retrieveData();
-    console.log('starting script');
-    console.log(configData);
-    console.log('end of script');
+    const camInfo = await this.getVideoOrientation(configData[0].camera);
+    // Update Recording State
+    await this.appSettingsService.update({ id: 1, recordingState: 'ON' });
     this.isRecording = true;
+    // Start python gstreamer process
     this.StreamProc = child.spawn('python3', [
       './src/DashCam-Stream.py',
       this.IPAddress,
       this.StreamPort.toString(),
-      configData[0].camera,
+      configData[0].camera.replace(/\s+/g, '-'),
       configData[0].Device,
-      configData[0].videoLength.toString(),
+      camInfo.videoLength.toString(),
+      camInfo.verticalFlip.toString(),
     ]);
 
     // Catch Process Connection errors
@@ -145,16 +168,42 @@ export class LiveStreamService {
     });
 
     // View Process.stdout
-    this.StreamProc.stdout?.on('data', data => {
-      console.log('Stdout from process: ' + data.toString());
+    this.StreamProc.stdout?.on('data', (data: Buffer) => {
+      if (data.toString('utf8') === 'SocketCreated\n') {
+        this.createCommSocket();
+      } else if (data.toString('utf8') === 'ServerStarted\n') {
+        this.startLiveStreamSocket();
+      }
     });
     this.StreamProc.stderr?.on('data', data => {
+      this.stopRecording();
       console.log('Stderr from process: ' + data.toString());
     });
+  }
+  async stopRecording(): Promise<void> {
+    await this.appSettingsService.update({ id: 1, recordingState: 'OFF' });
+    this.isRecording = false;
+    if (this.StreamProc) {
+      console.log('killing gstreamer process');
+      this.StreamProc.on('exit', () => {
+        console.log('Recording stopped. ');
+      });
+      this.StreamProc.kill('SIGINT');
+      this.StreamProc = null;
+    }
+    if (this.frontEndStreamProvider) {
+      console.log('closing front end socket');
+      this.frontEndStreamProvider.close();
+      this.frontEndStreamProvider = null;
+    }
 
-    setTimeout(() => {
-      this.createCommSocket();
-    }, 3000);
+    if (this.tcpStreamSocket != null) {
+      console.log('closing tcp gstreamer client');
+      this.pythonSocket.write('stop');
+      this.tcpStreamSocket.removeAllListeners();
+      this.tcpStreamSocket.destroy();
+      this.tcpStreamSocket = null;
+    }
   }
   createCommSocket(): void {
     this.pythonSocket = new net.Socket();
@@ -165,14 +214,24 @@ export class LiveStreamService {
   updateVideoLength(command: string): void {
     this.pythonSocket.write(command);
   }
-  rotateStream(): void {
-    this.pythonSocket.write('flip');
+  rotateStream(verticalFlip: number): void {
+    this.pythonSocket.write('flip ' + verticalFlip);
   }
   updateCamSettings(command: string): void {
     child.exec(command, (error, stdout, stderr) => {
-      if (error) console.log('process error: ' + error);
-      if (stdout) console.log('stdout: ' + stdout);
-      if (stderr) console.log('stderr: ' + stderr);
+      if (error || stderr) {
+        this.errCount++;
+        console.log('process error: ' + error);
+        if (this.errCount < 2) {
+          this.stopLiveStreamServer();
+          this.clientCounter = 0;
+        } else {
+          this.errCount = 0;
+        }
+      }
+      if (stdout) {
+        console.log('stdout: ' + stdout);
+      }
     });
   }
 }

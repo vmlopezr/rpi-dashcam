@@ -55,6 +55,5 @@ export class DataBaseController {
   async updateMSHD3000Data(@Body() data: Partial<MSHD3000Data>): Promise<void> {
     data.id = 1;
     this.msdh3000Service.update(data);
-    console.log(data);
   }
 }

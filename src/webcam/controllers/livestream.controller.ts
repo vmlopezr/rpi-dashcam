@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { LiveStreamService } from '../services/livestream/livestream.service';
 import { Data } from '../services/livestream/livestream.service';
 
@@ -30,9 +30,9 @@ export class LiveStreamController {
     this.livestreamService.updateVideoLength(data.camSettings);
   }
 
-  @Get('/rotate')
-  rotateStream(): void {
-    this.livestreamService.rotateStream();
+  @Get('/rotate/:verticalFlip')
+  rotateStream(@Param('verticalFlip') verticalFlip: number): void {
+    this.livestreamService.rotateStream(verticalFlip);
   }
 
   @Get('/start')
