@@ -13,7 +13,8 @@ export class AppSettingsService {
   async update(settings: Partial<AppSettings>): Promise<UpdateResult> {
     return await this.appSettingsRepo.update(settings.id, settings);
   }
-  async retrieveData(): Promise<AppSettings[]> {
-    return await this.appSettingsRepo.find({ id: 1 });
+  async retrieveData(): Promise<AppSettings> {
+    const result = await this.appSettingsRepo.find({ id: 1 });
+    return result[0];
   }
 }

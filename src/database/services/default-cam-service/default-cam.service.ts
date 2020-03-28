@@ -12,7 +12,8 @@ export class DefaultCamService {
   async update(settings: Partial<DefaultCamData>): Promise<UpdateResult> {
     return await this.camRepository.update(settings.id, settings);
   }
-  async retrieveData(): Promise<DefaultCamData[]> {
-    return await this.camRepository.find({ id: 1 });
+  async retrieveData(): Promise<DefaultCamData> {
+    const result = await this.camRepository.find({ id: 1 });
+    return result[0];
   }
 }

@@ -9,7 +9,8 @@ import { AppSettings } from './services/app-settings-service/app-settings.entity
 import { DefaultCamData } from './services/default-cam-service/default-cam.entity';
 import { LogitechC920Data } from './services/logitech-c920-service/logitech-c920.entity';
 import { MSHD3000Data } from './services/mshd3000-service/MSHD3000.entity';
-
+import { ErrorLog } from './services/error-log-service/error-log.entity';
+import { ErrorLogService } from './services/error-log-service/error-log.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -17,6 +18,7 @@ import { MSHD3000Data } from './services/mshd3000-service/MSHD3000.entity';
       DefaultCamData,
       LogitechC920Data,
       MSHD3000Data,
+      ErrorLog,
     ]),
   ],
   providers: [
@@ -24,6 +26,7 @@ import { MSHD3000Data } from './services/mshd3000-service/MSHD3000.entity';
     DefaultCamService,
     LogitechC920Service,
     MSHD3000Service,
+    ErrorLogService,
   ],
   controllers: [DataBaseController],
   exports: [
@@ -31,6 +34,7 @@ import { MSHD3000Data } from './services/mshd3000-service/MSHD3000.entity';
     DefaultCamService,
     LogitechC920Service,
     MSHD3000Service,
+    ErrorLogService,
   ],
 })
 export class DataBaseModule {}

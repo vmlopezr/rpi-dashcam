@@ -221,11 +221,16 @@ class WebcamRecord():
         self.temp_recordpipe.set_property("name", "recordbin2")
 
     def create_socket(self):
-        # Socket setup, allow only one connection
-        self.socket = socket.socket()
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.bind((IP_Address, 10000))
-        self.socket.listen(1)
+        try:
+            # Socket setup, allow only one connection
+            self.socket = socket.socket()
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.socket.bind((IP_Address, 10000))
+            self.socket.listen(1)
+        except socket.error as serr:
+            print(serr, file=sys.stderr)
+            sys.stderr.flush()
+
         print("SocketCreated")
         sys.stdout.flush()
 
@@ -308,17 +313,23 @@ class WebcamRecord():
 
     def start_livestream_server(self):
         if not self.server_running:
-            # Link to main pipeline
-            self.jpegpipe.add(self.server_pipe)
-            if not self.jpegtee.link(self.server_pipe):
-                print("could not link tcp pipe to pipeline")
-                sys.stdout.flush()
+            try:
+                # Link to main pipeline
+                self.jpegpipe.add(self.server_pipe)
+                if not self.jpegtee.link(self.server_pipe):
+                    print("could not link tcp pipe to pipeline")
+                    sys.stdout.flush()
 
-            # print("Webcam TCP Stream Started")
-            self.server_running = True
+                # print("Webcam TCP Stream Started")
+                self.server_running = True
 
-            # Start Recording pipeline
-            self.server_pipe.set_state(Gst.State.PLAYING)
+                # Start Recording pipeline
+                self.server_pipe.set_state(Gst.State.PLAYING)
+            except Exception as e:
+                print(e, file=sys.stderr)
+                sys.stderr.flush()
+                return
+
             print("ServerStarted")
             sys.stdout.flush()
 
@@ -410,16 +421,7 @@ class WebcamRecord():
         self.main_tee.unlink(self.temp_recordpipe)
         self.temp_recordpipe.ref()
         self.pipeline.remove(self.temp_recordpipe)
-        # print("finished writing")
 
-    # def finalize_recording(self):
-    #     self.temp_recordpipe.get_by_name(
-    #         "encoder").send_event(Gst.Event.new_eos())
-    #     self.temp_recordpipe.set_state(Gst.State.NULL)
-
-    #     self.main_tee.unlink(self.temp_recordpipe)
-    #     self.temp_recordpipe.ref()
-    #     self.pipeline.remove(self.temp_recordpipe)
     def switch_recordingpipe(self):
         temp = self.main_recordpipe
         self.main_recordpipe = self.temp_recordpipe
@@ -480,8 +482,8 @@ class WebcamRecord():
         )
 
     def on_error(self, bus, msg):
-        print('on_error():', msg.parse_error())
-        sys.stdout.flush()
+        print('on_error():', msg.parse_error(),file=sys.stderr)
+        sys.stderr.flush()
 
     def probe_block(self, pad, buf):
         return True
