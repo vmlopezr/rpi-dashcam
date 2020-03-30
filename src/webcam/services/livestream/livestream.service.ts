@@ -67,8 +67,18 @@ export class LiveStreamService {
 
   // Communicates to the python process to start the LiveStream server
   startLiveStreamServer(): void {
-    if (!this.tcpStreamSocket) this.pythonSocket.write('start');
-    this.clientCounter++;
+    if (!this.tcpStreamSocket)
+      this.pythonSocket.write('start', async error => {
+        if (error) {
+          await this.errorLogService.insertEntry({
+            errorMessage: error.message,
+            errorSource: 'Node: Python Client Socket',
+            timeStamp: new Date().toString(),
+          });
+        } else {
+          this.clientCounter++;
+        }
+      });
   }
 
   // Creates the socket when the python process successfully starts the livestream server.
@@ -84,10 +94,21 @@ export class LiveStreamService {
     }
     console.log('client: ' + this.clientCounter);
     if (this.clientCounter <= 0) {
-      this.frontEndStreamProvider.close();
-      this.dicer.destroy();
+      if (this.frontEndStreamProvider != null) {
+        this.frontEndStreamProvider.close();
+        this.dicer.destroy();
+      }
+
       if (this.tcpStreamSocket != null) {
-        this.pythonSocket.write('stop');
+        this.pythonSocket.write('stop', async error => {
+          if (error) {
+            await this.errorLogService.insertEntry({
+              errorMessage: error.message,
+              errorSource: 'Node: Python Client Socket',
+              timeStamp: new Date().toString(),
+            });
+          }
+        });
         this.tcpStreamSocket.removeAllListeners();
         this.tcpStreamSocket.destroy();
         this.tcpStreamSocket = null;
@@ -164,15 +185,12 @@ export class LiveStreamService {
         camInfo.videoLength.toString(),
         camInfo.verticalFlip.toString(),
       ]);
-
       // Catch Process Connection errors
       this.StreamProc.on('error', async err => {
         await this.errorLogService.insertEntry({
           errorMessage: err.message,
-          errorName: err.name,
+          errorSource: 'Node: Python Process Start',
           timeStamp: new Date().toString(),
-          errorStack: err.stack,
-          errorCode: 1,
         });
         console.log('gstreamer process exited on error: ' + err.toString());
         this.cleanExit();
@@ -186,14 +204,11 @@ export class LiveStreamService {
           this.startLiveStreamSocket();
         }
       });
-      this.StreamProc.stderr?.on('data', async(data: Buffer) => {
-
+      this.StreamProc.stderr?.on('data', async (data: Buffer) => {
         await this.errorLogService.insertEntry({
           errorMessage: data.toString(),
-          errorName: 'Python Script',
+          errorSource: 'Python Script',
           timeStamp: new Date().toString(),
-          errorStack: '',
-          errorCode: 1,
         });
         this.stopRecording();
         console.log('Stderr from process: ' + data.toString());
@@ -215,7 +230,15 @@ export class LiveStreamService {
       this.frontEndStreamProvider = null;
     }
     if (this.tcpStreamSocket) {
-      this.pythonSocket.write('stop');
+      this.pythonSocket.write('stop', async error => {
+        if (error) {
+          await this.errorLogService.insertEntry({
+            errorMessage: error.message,
+            errorSource: 'Node: Python Client Socket',
+            timeStamp: new Date().toString(),
+          });
+        }
+      });
       this.tcpStreamSocket.removeAllListeners();
       this.tcpStreamSocket.destroy();
       this.tcpStreamSocket = null;
@@ -226,33 +249,53 @@ export class LiveStreamService {
     this.pythonSocket.connect(10000, this.IPAddress, () => {
       console.log('Connected to python server');
     });
+    this.pythonSocket.on('error', async error => {
+      await this.errorLogService.insertEntry({
+        errorMessage: error.message,
+        errorSource: 'Node: Python Client Socket',
+        timeStamp: new Date().toString(),
+      });
+    });
   }
   updateVideoLength(command: string): void {
-    this.pythonSocket.write(command);
+    this.pythonSocket.write(command, async error => {
+      if (error) {
+        await this.errorLogService.insertEntry({
+          errorMessage: error.message,
+          errorSource: 'Node: Python Client Socket',
+          timeStamp: new Date().toString(),
+        });
+      }
+    });
   }
   rotateStream(verticalFlip: number): void {
-    this.pythonSocket.write('flip ' + verticalFlip);
+    this.pythonSocket.write('flip ' + verticalFlip, async error => {
+      if (error) {
+        await this.errorLogService.insertEntry({
+          errorMessage: error.message,
+          errorSource: 'Node: Python Client Socket',
+          timeStamp: new Date().toString(),
+        });
+      }
+    });
   }
   updateCamSettings(command: string): void {
     child.exec(command, async (error, stdout, stderr) => {
       if (error || stderr) {
         this.errCount++;
         // console.log('process error: ' + error);
-        console.log('error count: ' + this.errCount )
+        console.log('error count: ' + this.errCount);
         await this.errorLogService.insertEntry({
           errorMessage: error.message,
-          errorName: error.name,
-          errorCode: error.code,
+          errorSource: 'v4l2-ctl Error',
           timeStamp: new Date().toString(),
-          errorStack: error.stack,
         });
         if (this.errCount < 2) {
-          console.log('inside if')
+          console.log('inside if');
           this.stopLiveStreamServer();
           this.clientCounter = 0;
         } else {
           this.errCount = 0;
-        
         }
       }
       if (stdout) {
@@ -261,4 +304,3 @@ export class LiveStreamService {
     });
   }
 }
- 

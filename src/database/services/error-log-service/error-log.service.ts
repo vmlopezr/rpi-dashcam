@@ -23,7 +23,6 @@ export class ErrorLogService {
   async deleteLogs(): Promise<void> {
     const query = `DELETE FROM error_log`;
     const query2 = `DELETE FROM sqlite_sequence WHERE name = 'error_log'`;
-    // await this.errorLogRepository.clear();
     await this.errorLogRepository.query(query);
     await this.errorLogRepository.query(query2);
   }

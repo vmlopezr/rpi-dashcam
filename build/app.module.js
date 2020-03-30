@@ -7,14 +7,29 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
-const video_controller_1 = require("./VideoCtrl/video.controller");
-const livestream_controller_1 = require("./LivestreamCtrl/livestream.controller");
+const database_module_1 = require("./database/database.module");
+const webcam_module_1 = require("./webcam/webcam.module");
+const typeorm_1 = require("@nestjs/typeorm");
+const serve_static_1 = require("@nestjs/serve-static");
+const path_1 = require("path");
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
     common_1.Module({
-        imports: [],
-        controllers: [video_controller_1.VideoController, livestream_controller_1.LivestreamController],
+        imports: [
+            database_module_1.DataBaseModule,
+            webcam_module_1.WebcamModule,
+            typeorm_1.TypeOrmModule.forRoot({
+                type: 'sqlite',
+                database: './data/camData.sql',
+                entities: [__dirname + '/**/*.entity{.ts,.js}'],
+                synchronize: true,
+            }),
+            serve_static_1.ServeStaticModule.forRoot({
+                rootPath: path_1.join(__dirname, '..', '..', 'Dash_Cam_App', 'www'),
+            }),
+        ],
+        controllers: [],
         providers: [],
     })
 ], AppModule);

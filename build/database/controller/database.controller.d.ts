@@ -1,0 +1,30 @@
+import { AppSettingsService } from '../services/app-settings-service/app-settings.service';
+import { DefaultCamService } from '../services/default-cam-service/default-cam.service';
+import { LogitechC920Service } from '../services/logitech-c920-service/logitech-c920.service';
+import { MSHD3000Service } from '../services/mshd3000-service/mshd3000.service';
+import { ErrorLogService } from '../services/error-log-service/error-log.service';
+import { AppSettings } from '../services/app-settings-service/app-settings.entity';
+import { DefaultCamData } from '../services/default-cam-service/default-cam.entity';
+import { LogitechC920Data } from '../services/logitech-c920-service/logitech-c920.entity';
+import { MSHD3000Data } from '../services/mshd3000-service/MSHD3000.entity';
+import { ErrorLog } from '../services/error-log-service/error-log.entity';
+export declare class DataBaseController {
+    private settingsService;
+    private defaultCamService;
+    private logitechC920Service;
+    private msdh3000Service;
+    private errorLogService;
+    constructor(settingsService: AppSettingsService, defaultCamService: DefaultCamService, logitechC920Service: LogitechC920Service, msdh3000Service: MSHD3000Service, errorLogService: ErrorLogService);
+    getAppSettings(): Promise<AppSettings>;
+    getDefaultCamData(): Promise<DefaultCamData>;
+    getLogitechC920Data(): Promise<LogitechC920Data>;
+    getMSHD3000Data(): Promise<MSHD3000Data>;
+    getFullErrorLog(): Promise<ErrorLog[]>;
+    getError(id: number): Promise<ErrorLog>;
+    updateAppSettings(data: Partial<AppSettings>): Promise<void>;
+    updateDefaultCamSettings(data: Partial<DefaultCamData>): Promise<void>;
+    updateLogitechC920Data(data: Partial<LogitechC920Data>): Promise<void>;
+    updateMSHD3000Data(data: Partial<MSHD3000Data>): Promise<void>;
+    insertToErrorLog(data: ErrorLog): Promise<void>;
+    clearTable(): Promise<void>;
+}

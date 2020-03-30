@@ -6,17 +6,11 @@ export class ErrorLog {
   id: number;
 
   @Column()
-  errorName: string;
+  errorSource: string;
 
   @Column()
   errorMessage: string;
 
   @Column()
-  errorCode: number;
-
-  @Column()
   timeStamp: string;
-
-  @Column()
-  errorStack: string;
 }
