@@ -2422,7 +2422,7 @@
         "signature": "8f1241f5d9f0d3d72117768b3c974e462840fbd85026fb66685078945404cf2f"
       },
       "../src/app.module.ts": {
-        "version": "23af80d7e9296a6393c36a9d5557495187a8cec097c4bb0de9e6f6b22f3e555f",
+        "version": "ceef6ffb14c7797d12a0d78c083db895f81fe2a11f1e71a0892da9ba159769c6",
         "signature": "b82491e2990291580288c5602d4c017238977749d52b17391f0e45d9a29be644"
       },
       "../src/main.ts": {

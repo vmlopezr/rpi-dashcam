@@ -10,11 +10,11 @@ then
 fi
 # redirect traffic to DashCam Page
 # iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 192.168.10.1:50000
-# iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.10.1:50000
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.10.1:50000
 
 # Redirect traffic, option 2
-# iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 443 -j DNAT --to-destination 192.168.10.1:50000
-# iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 80 -j DNAT --to-destination 192.168.10.1:50000
+iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 443 -j DNAT --to-destination 192.168.10.1:50000
+iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 80 -j DNAT --to-destination 192.168.10.1:50000
 
 
 #Update RPI

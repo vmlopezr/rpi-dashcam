@@ -125,8 +125,8 @@ class WebcamRecord():
         self.pipeline.add(self.main_tee)
 
         # added for standalone testing
-        self.pipeline.add(self.queue)
-        self.pipeline.add(self.sink)
+        # self.pipeline.add(self.queue)
+        # self.pipeline.add(self.sink)
 
         # Link the elements in the pipeline
         if not self.vidsrc.link(self.caps_filter):
@@ -158,8 +158,8 @@ class WebcamRecord():
             sys.stdout.flush()
             sys.exit(1)
         # added for testing
-        self.main_tee.link(self.queue)
-        self.queue.link(self.sink)
+        # self.main_tee.link(self.queue)
+        # self.queue.link(self.sink)
 
     def create_image_capture_pipeline(self):
         # self.capture_pipe = Gst.parse_bin_from_description(

@@ -4,7 +4,7 @@ import { WebcamModule } from './webcam/webcam.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-
+console.log(__dirname)
 @Module({
   imports: [
     DataBaseModule,
@@ -16,7 +16,7 @@ import { join } from 'path';
       synchronize: true,
     }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'Dash_Cam_App', 'www'),
+      rootPath: join(__dirname, '..', 'www'),
     }),
   ],
   controllers: [],

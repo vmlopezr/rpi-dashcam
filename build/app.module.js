@@ -12,6 +12,7 @@ const webcam_module_1 = require("./webcam/webcam.module");
 const typeorm_1 = require("@nestjs/typeorm");
 const serve_static_1 = require("@nestjs/serve-static");
 const path_1 = require("path");
+console.log(__dirname);
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
@@ -26,7 +27,7 @@ AppModule = __decorate([
                 synchronize: true,
             }),
             serve_static_1.ServeStaticModule.forRoot({
-                rootPath: path_1.join(__dirname, '..', '..', 'Dash_Cam_App', 'www'),
+                rootPath: path_1.join(__dirname, '..', 'www'),
             }),
         ],
         controllers: [],
