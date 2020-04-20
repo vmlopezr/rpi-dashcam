@@ -8,9 +8,9 @@ then
   echo "Setup aborted"
   exit
 fi
-# redirect traffic to DashCam Page
+# # redirect traffic to DashCam Page
 # iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 192.168.10.1:50000
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.10.1:50000
+# iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.10.1:50000
 
 # Redirect traffic, option 2
 iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 443 -j DNAT --to-destination 192.168.10.1:50000
@@ -26,7 +26,7 @@ command -v python3 >/dev/null 2>&1 || {
     sudo apt-get install python3
 }
 
-#Install v4l2-utils
+#Install v4l2-utils for USB Webcam interfacing
 command -v v4l2-ctl >/dev/null 2>&1 ||  { 
     echo "Installing V4L2 tools..."; 
     sudo dnf install v4l-utils
@@ -38,8 +38,8 @@ command -v git >/dev/null 2>&1 ||  {
     sudo apt-get install git
 }
 
-#NOTE: Need to check if it is already installed
-
+# Verify if gstreamer is already installed, otherwise install necessary
+# plugins
 command -v gst-inspect-1.0 >/dev/null 2>&1 || {
     echo "Installing gstreamer plugins"
     # gstreamer plugins
@@ -52,6 +52,7 @@ command -v gst-inspect-1.0 >/dev/null 2>&1 || {
     sudo apt-get install libcairo2-dev gir1.2-gstreamer-1.0
 }
 
+# Install the most recent version of NodeJS if not already installed
 command -v node >/dev/null 2>&1 || {
     #installing node
     echo "Installing nodejs..."
@@ -68,6 +69,7 @@ command -v node >/dev/null 2>&1 || {
     fi
 }
 
+# Install Yarn if not already installed
 command -v yarn >/dev/null 2>&1 ||  { 
     echo "Installing yarn..."; 
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
@@ -87,8 +89,10 @@ WAN_INTERFACE="interface wlan0
     static ip_address=192.168.10.1/24
     nohook wpa_supplicant"
 
-sudo echo "$WAN_INTERFACE" >> /etc/dhcpcd.conf
-sudo service dhcpcd restart
+grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 || {
+    sudo echo "$WAN_INTERFACE" >> /etc/dhcpcd.conf
+    sudo service dhcpcd restart
+}
 
 sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
 
@@ -113,13 +117,18 @@ wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP"
 
-sudo echo "$HOSTAPD_CONFIG" >> /etc/hostapd/hostapd.conf
+sudo echo "$HOSTAPD_CONFIG" > /etc/hostapd/hostapd.conf
 
 sudo echo "DAEMON_CONF=\"/etc/hostapd/hostapd.conf\"" >> /etc/default/hostapd 
 
+#unblock WiFi
+sudo rfkill unblock 0
+
+#start the hostapd service 
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl start hostapd
+
 #Install Dashcam Server
 # yarn install
 

@@ -9,6 +9,7 @@ import signal
 import os
 import time
 import shutil
+from subprocess import PIPE, Popen
 
 gi.require_version('Gst', '1.0')  # nopep8
 from gi.repository import Gst, GLib
@@ -20,9 +21,28 @@ try:
 except (ImportError, RuntimeError):
     DEV_ENV = True
 
+# Verify if the python program is running on an RPI or on an PC
+stream = Popen("cat /proc/device-tree/model", shell=True, stdout=PIPE, stderr=PIPE)
+stdout, stderr = stream.communicate()
+if len(stdout) == 0:
+    ON_RPI = True
+    RPI_MODEL = stdout.decode('utf-8')
+    if "PI 4" in RPI_MODEL:
+        RPI4 = True
+    else: 
+        RPI4 = False
+else:
+    ON_RPI = False  
+    RPI4 = False  
 
-# Caps = 'image/jpeg,width=800,height=600,framerate=20/1 '
-Caps = 'image/jpeg,width=1280,height=720,framerate=15/1 '
+if RPI4 or not ON_RPI:
+    # Program running on Unix PC or on RPI4. 
+    Caps = 'image/jpeg,width=1280,height=720,framerate=15/1 '
+else:
+    # Program is running on RPI3 and lower. Decrease resolution and frame rate
+    # due to ram limitation.
+    Caps = 'image/jpeg,width=320,height=240,framerate=10/1 '
+
 IP_Address = sys.argv[1]
 PORT = int(sys.argv[2])
 CAMERA = sys.argv[3]
@@ -204,13 +224,13 @@ class WebcamRecord():
         else:
             self.main_recordpipe = Gst.parse_bin_from_description(
                 "queue name=filequeue ! deinterlace " +
-                "! v4l2h264enc tune=zerolatency name=encoder " +
+                "! v4l2h264enc name=encoder " +
                 "! h264parse config-interval=-1 !" +
                 "mp4mux ! filesink name=filesink", True)
 
             self.temp_recordpipe = Gst.parse_bin_from_description(
                 "queue name=filequeue ! deinterlace " +
-                "! v4l2h264enc tune=zerolatency name=encoder " +
+                "! v4l2h264enc name=encoder " +
                 "! h264parse config-interval=-1 !" +
                 "mp4mux ! filesink name=filesink", True)
 
