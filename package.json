@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "startTS": "nodemon --watch '**/*.ts' --ignore 'node_modules/**/*' --exec ts-node src/main.ts"
+    "startTS": "nodemon --watch '**/*.ts' --ignore 'node_modules/**/*' --exec ts-node src/main.ts",
+    "runApp": "node build/main.js"
   },
   "dependencies": {
     "@nestjs/common": "^6.10.14",

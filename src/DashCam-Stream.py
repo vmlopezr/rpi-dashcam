@@ -15,33 +15,35 @@ gi.require_version('Gst', '1.0')  # nopep8
 from gi.repository import Gst, GLib
 
 Gst.init(None)
-try:
-    import RPi.GPIO as gpio
-    DEV_ENV = False
-except (ImportError, RuntimeError):
-    DEV_ENV = True
-
-# Verify if the python program is running on an RPI or on an PC
-stream = Popen("cat /proc/device-tree/model", shell=True, stdout=PIPE, stderr=PIPE)
-stdout, stderr = stream.communicate()
-if len(stdout) == 0:
-    ON_RPI = True
-    RPI_MODEL = stdout.decode('utf-8')
-    if "PI 4" in RPI_MODEL:
-        RPI4 = True
-    else: 
-        RPI4 = False
+if os.path.isfile("/proc/device-tree/model"):
+    # Verify if the python program is running on an RPI or on an PC
+    stream = Popen("cat /proc/device-tree/model", shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = stream.communicate()
+    if len(stderr) == 0:
+        ON_RPI = True
+        DEV_ENV = False
+        RPI_MODEL = stdout.decode('utf-8')
+        if "Pi 4" in RPI_MODEL:
+            RPI4 = True
+        else: 
+            RPI4 = False
+    else:
+        DEV_ENV = True
+        ON_RPI = False  
+        RPI4 = False  
 else:
-    ON_RPI = False  
-    RPI4 = False  
+    DEV_ENV = True
+    RPI4 = False
+    ON_RPI = False
 
-if RPI4 or not ON_RPI:
+
+if RPI4 or DEV_ENV:
     # Program running on Unix PC or on RPI4. 
     Caps = 'image/jpeg,width=1280,height=720,framerate=15/1 '
 else:
     # Program is running on RPI3 and lower. Decrease resolution and frame rate
     # due to ram limitation.
-    Caps = 'image/jpeg,width=320,height=240,framerate=10/1 '
+    Caps = 'image/jpeg,width=320,height=240,framerate=20/1 '
 
 IP_Address = sys.argv[1]
 PORT = int(sys.argv[2])
@@ -207,30 +209,30 @@ class WebcamRecord():
         self.server_queue = self.server_pipe.get_by_name("server_queue")
 
     def create_video_capture_bin(self):
-        if DEV_ENV:
+
+        # Running on RaspberryPi
+        if ON_RPI:
             self.main_recordpipe = Gst.parse_bin_from_description(
                 "queue name=filequeue ! deinterlace " +
-                "! x264enc tune=zerolatency bitrate=8000 name=encoder " +
-                "! h264parse config-interval=-1 !" +
-                "mp4mux ! filesink name=filesink", True)
-            # For Dev Computer
-            self.temp_recordpipe = Gst.parse_bin_from_description(
-                "queue name=filequeue ! deinterlace " +
-                "! x264enc tune=zerolatency bitrate=8000 name=encoder " +
+                "! v4l2h264enc name=encoder " +
                 "! h264parse config-interval=-1 !" +
                 "mp4mux ! filesink name=filesink", True)
 
-        # Running on RaspberryPi
+            self.temp_recordpipe = Gst.parse_bin_from_description(
+                "queue name=filequeue ! deinterlace " +
+                "! v4l2h264enc name=encoder " +
+                "! h264parse config-interval=-1 !" +
+                "mp4mux ! filesink name=filesink", True)
+        # Running on PC
         else:
             self.main_recordpipe = Gst.parse_bin_from_description(
                 "queue name=filequeue ! deinterlace " +
-                "! v4l2h264enc name=encoder " +
+                "! x264enc tune=zerolatency bitrate=8000 name=encoder " +
                 "! h264parse config-interval=-1 !" +
                 "mp4mux ! filesink name=filesink", True)
-
             self.temp_recordpipe = Gst.parse_bin_from_description(
                 "queue name=filequeue ! deinterlace " +
-                "! v4l2h264enc name=encoder " +
+                "! x264enc tune=zerolatency bitrate=8000 name=encoder " +
                 "! h264parse config-interval=-1 !" +
                 "mp4mux ! filesink name=filesink", True)
 
