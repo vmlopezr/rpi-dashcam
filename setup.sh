@@ -10,60 +10,15 @@ then
 fi
 
 #Update RPI
-sudo apt-get update -y
+sudo apt-get -y update
 
-# Make iptables rules persistent
-sudo apt-get install iptables-persistent
-
-# # Redirect http traffic to static website at port 500000
-# sudo iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 443 -j DNAT --to-destination 192.168.10.1:50000
-# sudo iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 80 -j DNAT --to-destination 192.168.10.1:50000
-
-sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j DNAT --to-destination 192.168.10.1:50000
-sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.10.1:50000
-sudo iptables -t nat -A POSTROUTING -j MASQUERADE
-
-sudo iptables-save > /etc/iptables/rules.v4
-
-#Check if python3 is installed (Should be already there by default)
-command -v python3 >/dev/null 2>&1 || {
-    echo "Installing python3..."
-    sudo apt-get install python3
-}
-
-#Install v4l2-utils for USB Webcam interfacing
-command -v v4l2-ctl >/dev/null 2>&1 ||  { 
-    echo "Installing V4L2 tools..."; 
-    sudo dnf install v4l-utils
-}
-
-#check if git is installed, install otherwise
-command -v git >/dev/null 2>&1 ||  { 
-    echo "Installing git..."; 
-    sudo apt-get install git
-}
-
-# Verify if gstreamer is already installed, otherwise install necessary
-# plugins
-command -v gst-inspect-1.0 >/dev/null 2>&1 || {
-    echo "Installing gstreamer plugins"
-    # gstreamer plugins
-    sudo apt-get install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer-1.0 gstreamer1.0-dev
-}
-
-#Installing GI, GST for python
-# https://pygobject.readthedocs.io/en/latest/getting_started.html
-sudo apt-get install python3-gi python-gst-1.0 python3-gi-cairo gir1.2-gtk-3.0
-sudo apt-get install libgirepository1.0-dev
-sudo apt-get install libcairo2-dev gir1.2-gstreamer-1.0
-
-
+printf "Checking for node...\n\n\n"
 # Install the most recent version of NodeJS if not already installed
 command -v node >/dev/null 2>&1 || {
     #installing node
     echo "Installing nodejs..."
     curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    sudo apt-get -y install nodejs
 
     if command -v nodejs >/dev/null 2>&1
     then
@@ -75,6 +30,7 @@ command -v node >/dev/null 2>&1 || {
     fi
 }
 
+printf "Checking for yarn...\n\n\n"
 # Install Yarn if not already installed
 command -v yarn >/dev/null 2>&1 ||  { 
     echo "Installing yarn..."; 
@@ -84,38 +40,100 @@ command -v yarn >/dev/null 2>&1 ||  {
 }
 
 
+printf "Installing Repository...\n\n\n"
+# install repo
+yarn install
+
+
+printf "Setting up iptables for site...\n\n\n"
+# Make iptables rules persistent
+sudo apt-get -y install iptables-persistent
+
+# # Redirect http traffic to static website at port 500000
+# sudo iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 443 -j DNAT --to-destination 192.168.10.1:50000
+# sudo iptables -t nat -A PREROUTING -p tcp -m tcp -s 192.168.10.0/24 --dport 80 -j DNAT --to-destination 192.168.10.1:50000
+
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j DNAT --to-destination 192.168.10.1:50000
+sudo iptables -t nat -A POSTROUTING -j MASQUERADE
+
+sudo iptables-save > /etc/iptables/rules.v4
+
+#Check if python3 is installed (Should be already there by default)
+command -v python3 >/dev/null 2>&1 || {
+    echo "Installing python3..."
+    sudo apt-get -y install python3
+}
+
+#Install v4l2-utils for USB Webcam interfacing
+command -v v4l2-ctl >/dev/null 2>&1 ||  { 
+    printf "Installing V4L2 tools...\n\n\n"; 
+    sudo apt-get -y install v4l-utils
+}
+
+# Verify if gstreamer is already installed, otherwise install necessary
+# plugins
+command -v gst-inspect-1.0 >/dev/null 2>&1 || {
+    printf "Installing gstreamer plugins...\n\n\n"
+    # gstreamer plugins
+    sudo apt-get -y install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer-1.0 gstreamer1.0-dev
+}
+
+printf "Installing python plugins for gstreamer...\n\n\n"
+#Installing GI, GST for python
+# https://pygobject.readthedocs.io/en/latest/getting_started.html
+sudo apt-get -y install python3-gi python-gst-1.0 python3-gi-cairo gir1.2-gtk-3.0
+sudo apt-get -y install libgirepository1.0-dev
+sudo apt-get -y install libcairo2-dev gir1.2-gstreamer-1.0
+
+
+
 #Install necessary files for RTC
 
+printf "Starting Access Point setup...\n\n"
 #Update files for wireless RPI Access Point
 sudo apt install -y dnsmasq hostapd
 sudo systemctl stop dnsmasq
 sudo systemctl stop hostapd
 
 # Set wlan0 static IP and subnet
+
+#NOTE: This did not get written in the dhcpcd.conf file during install
 WAN_INTERFACE="
 interface wlan0
     static ip_address=192.168.10.1/24
     nohook wpa_supplicant"
 
-grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 || {
+if [grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1] 
+then
+    printf "wlan0 interface exists...\n"
+else
+    printf "Setting Static IP address for wifi...\n\n"
     sudo echo "$WAN_INTERFACE" >> /etc/dhcpcd.conf
+    # When source config for dhcpcd is changed, daemon must be reloaded
+    sudo systemctl daemon-reload
     sudo service dhcpcd restart
-}
+fi
 
+printf "Setting host...\n\n"
 # Update hosts
 HOST="192.168.10.1    rpidashcam"
 grep -F "$HOST" /etc/hosts >/dev/null 2>&1 || {
     sudo echo "$HOST" >> /etc/hosts
 }
 
-# Update dnsmasq.conf for dns and dhcp
-sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+printf "Setting dnsmasq...\n\n"
+FILE=/etc/dnsmasq.conf.orig
+if test -f "$FILE"; then
+    echo "$FILE exists"
+else
+    # Update dnsmasq.conf for dns and dhcp
+    sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+fi
 
 DNSMASQ_CONFIG="
-listen-address=::1,127.0.0.1,192.168.10.1
+listen-address=127.0.0.1,192.168.10.1
 expand-hosts
 domain=com
-address=/#/192.168.10.1
 address=/com/192.168.10.1
 address=/com/127.0.0.1
 
@@ -134,7 +152,7 @@ nameserver 192.168.10.1
 "
 
 # Check for write permission
-if lsattr /etc/resolv.conf | grep i >/dev/null 2>&1
+if [lsattr /etc/resolv.conf | grep i >/dev/null 2>&1]
 then
     sudo chattr -i /etc/resolv.conf
 fi
@@ -142,6 +160,7 @@ fi
 sudo echo "$RESOLV_OPT" > /etc/resolv.conf
 sudo chattr +i /etc/resolv.conf
 
+printf "Setting AP configuration...\n\n"
 # update hostapd configuration
 HOSTAPD_CONFIG="
 interface=wlan0
@@ -170,9 +189,6 @@ sudo rfkill unblock 0
 sudo systemctl unmask hostapd
 sudo systemctl enable hostapd
 sudo systemctl start hostapd
-
-
-
 
 #Install Dashcam Server
 # yarn install
