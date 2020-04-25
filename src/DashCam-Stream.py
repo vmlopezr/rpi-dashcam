@@ -415,7 +415,7 @@ class WebcamRecord():
             sys.stdout.flush()
 
         # Start asynchronous timeout to allow for image generation
-        self.timeoutid = GLib.timeout_add(500, self.save_thumbnail)
+        self.timeoutid = GLib.timeout_add(1000, self.save_thumbnail)
 
     def save_thumbnail(self):
         # Block the capture pipe

@@ -12,7 +12,7 @@ fi
 #Update RPI
 sudo apt-get -y update
 
-printf "\nSetting up iptables for site...\n\n\n"
+printf "\n\nSetting up iptables for site...\n\n\n"
 # Make iptables rules persistent
 sudo apt-get -y install iptables-persistent
 
@@ -20,7 +20,7 @@ sudo apt-get -y install iptables-persistent
 sudo sh install-iptable-rules.sh
 sudo iptables-save > /etc/iptables/rules.v4
 
-printf "\nChecking for node...\n\n\n"
+printf "\n\nChecking for node...\n\n\n"
 # Install the most recent version of NodeJS if not already installed
 command -v node >/dev/null 2>&1 || {
     #installing node
@@ -38,7 +38,7 @@ command -v node >/dev/null 2>&1 || {
     fi
 }
 
-printf "\nChecking for yarn...\n\n\n"
+printf "\n\nChecking for yarn...\n\n\n"
 # Install Yarn if not already installed
 command -v yarn >/dev/null 2>&1 ||  { 
     echo "Installing yarn..."; 
@@ -47,7 +47,7 @@ command -v yarn >/dev/null 2>&1 ||  {
     sudo apt update && sudo apt install yarn
 }
 
-printf "\nInstalling Repository...\n\n\n"
+printf "\n\nInstalling Repository...\n\n\n"
 # install repo
 yarn install
 
@@ -59,19 +59,19 @@ command -v python3 >/dev/null 2>&1 || {
 
 #Install v4l2-utils for USB Webcam interfacing
 command -v v4l2-ctl >/dev/null 2>&1 ||  { 
-    printf "\nInstalling V4L2 tools...\n\n\n"; 
+    printf "\n\nInstalling V4L2 tools...\n\n\n"; 
     sudo apt-get -y install v4l-utils
 }
 
 # Verify if gstreamer is already installed, otherwise install necessary
 # plugins
 command -v gst-inspect-1.0 >/dev/null 2>&1 || {
-    printf "\nInstalling gstreamer plugins...\n\n\n"
+    printf "\n\nInstalling gstreamer plugins...\n\n\n"
     # gstreamer plugins
     sudo apt-get -y install libgstreamer1.0-0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-doc gstreamer1.0-tools gstreamer-1.0 gstreamer1.0-dev
 }
 
-printf "\nInstalling python plugins for gstreamer...\n\n\n"
+printf "\n\nInstalling python plugins for gstreamer...\n\n\n"
 #Installing GI, GST for python
 # https://pygobject.readthedocs.io/en/latest/getting_started.html
 sudo apt-get -y install python3-gi python-gst-1.0 python3-gi-cairo gir1.2-gtk-3.0
