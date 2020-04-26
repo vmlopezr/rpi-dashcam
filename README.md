@@ -1,3 +1,24 @@
+# RPI Webcam Interface
+The following project was written to use USB Webcams with Raspberry Pi 3b+ and Raspberry Pi 4. The project has been developed 
+using Raspbian images (both desktop and lite), and has yet to be tested with ubuntu. 
+
+There is initial support for Logitech C920 and Microsoft LifeCam HD3000. The application should be able to record with
+v4l2-compatible webcams. The live video streaming is only supported for the C920 and HD3000, until settings for the cameras
+listed in the home page are tracked down and integrated.
+
+The current the repository contains the backend server using nestJS. Before running the server, the static files for the page must be unzipped in the main repository. 
+
+The website repository can be found at https://github.com/vmlopezr/Dash_Cam_App.
+
+Before running the installation script "setup.sh", verify that i2c is enabled in the Raspberry Pi. 
+This can be done with the following:
+```bash
+$ sudo raspi-config
+```
+
+The Application establishes the Raspberry Pi as a wireless Access Point.
+The network SSID is RPIDASHCAM.
+The password is rpiDashCam.
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
 </p>
