@@ -1,30 +1,30 @@
 #!/bin/bash
 
-printf "\nStarting Access Point setup...\n\n"
+printf "\nStarting Access Point setup...\n"
+printf "Installing dnsmasq and hostapd.\n\n"
 #Update files for wireless RPI Access Point
 sudo apt install -y dnsmasq hostapd
 sudo systemctl stop dnsmasq
 sudo systemctl stop hostapd
 
 # Set wlan0 static IP and subnet
-
-#NOTE: This did not get written in the dhcpcd.conf file during install
 WAN_INTERFACE="
 interface wlan0
     static ip_address=192.168.10.1/24
     nohook wpa_supplicant"
 
-grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 && {
+# Append to /etc/dhcpcd.conf if 
+grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 || {
 
     printf "\nSetting Static IP address for wifi...\n\n"
     sudo echo "$WAN_INTERFACE" >> /etc/dhcpcd.conf
+
     # When source config for dhcpcd is changed, daemon must be reloaded
     sudo systemctl daemon-reload
     sudo service dhcpcd restart
 }
 
 printf "\nSetting host...\n\n"
-# Update hosts
 HOST="192.168.10.1    rpicam"
 grep -F "$HOST" /etc/hosts >/dev/null 2>&1 || {
     sudo echo "$HOST" >> /etc/hosts
@@ -54,7 +54,7 @@ local=/pi/
 address=/pi/192.168.10.1
 dhcp-range=192.168.10.10,192.168.10.30,255.255.255.0,24h
 "
-
+# Set dnsmasq configuration
 sudo echo "$DNSMASQ_CONFIG" > /etc/dnsmasq.conf
 sudo systemctl restart dnsmasq
 
@@ -76,8 +76,7 @@ sudo echo "$RESOLV_OPT" > /etc/resolv.conf
 sudo chattr +i /etc/resolv.conf
 
 printf "\nSetting AP configuration...\n\n"
-# update hostapd configuration
-# # Configuration for 5.0 GHz Wi-Fi
+# update hostapd configuration for 5.0 GHz Wi-Fi
 HOSTAPD_CONFIG="
 interface=wlan0
 hw_mode=a

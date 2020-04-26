@@ -87,9 +87,6 @@ sudo apt -y install python3-gi python-gst-1.0 python3-gi-cairo gir1.2-gtk-3.0
 sudo apt -y install libgirepository1.0-dev
 sudo apt -y install libcairo2-dev gir1.2-gstreamer-1.0
 
-
-
-
 #Install Access Point
 sudo sh AP-install.sh
 
