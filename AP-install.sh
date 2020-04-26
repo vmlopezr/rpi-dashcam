@@ -94,22 +94,6 @@ rsn_pairwise=CCMP
 ssid=RPIDASHCAM
 wpa_passphrase=rpiDashCam
 "
-# # Configuration for 2.4GHz Wi-Fi
-# HOSTAPD_CONFIG="
-# interface=wlan0
-# driver=nl80211
-# ssid=RPIDASHCAM
-# hw_mode=g
-# channel=7
-# wmm_enabled=0
-# macaddr_acl=0
-# auth_algs=1
-# ignore_broadcast_ssid=0
-# wpa=2
-# wpa_passphrase=rpiDashCam
-# wpa_key_mgmt=WPA-PSK
-# wpa_pairwise=TKIP
-# rsn_pairwise=CCMP"
 
 sudo echo "$HOSTAPD_CONFIG" > /etc/hostapd/hostapd.conf
 

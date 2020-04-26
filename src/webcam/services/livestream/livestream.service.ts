@@ -72,7 +72,7 @@ export class LiveStreamService {
         if (error) {
           await this.errorLogService.insertEntry({
             errorMessage: error.message,
-            errorSource: 'Node: Python Client Socket',
+            errorSource: 'Node: Starting Python Client Socket',
             timeStamp: new Date().toString(),
           });
         } else {
@@ -104,7 +104,7 @@ export class LiveStreamService {
           if (error) {
             await this.errorLogService.insertEntry({
               errorMessage: error.message,
-              errorSource: 'Node: Python Client Socket',
+              errorSource: 'Node: Stopping Python Client Socket',
               timeStamp: new Date().toString(),
             });
           }
@@ -198,16 +198,19 @@ export class LiveStreamService {
 
       // View Process.stdout
       this.StreamProc.stdout?.on('data', (data: Buffer) => {
-        if (data.toString('utf8') === 'SocketCreated\n') {
+        const response = data.toString('utf8').replace(/\s/g,'');
+        if (response == 'SocketCreated\n') {
           this.createCommSocket();
-        } else if (data.toString('utf8') === 'ServerStarted\n') {
+        } else if (response == 'ServerStarted\n') {
           this.startLiveStreamSocket();
+        } else {
+          console.log(response);
         }
       });
       this.StreamProc.stderr?.on('data', async (data: Buffer) => {
         await this.errorLogService.insertEntry({
           errorMessage: data.toString(),
-          errorSource: 'Python Script',
+          errorSource: 'Python Process',
           timeStamp: new Date().toString(),
         });
         this.stopRecording();
@@ -234,7 +237,7 @@ export class LiveStreamService {
         if (error) {
           await this.errorLogService.insertEntry({
             errorMessage: error.message,
-            errorSource: 'Node: Python Client Socket',
+            errorSource: 'Node: Stopping Python Client Socket',
             timeStamp: new Date().toString(),
           });
         }
@@ -252,7 +255,7 @@ export class LiveStreamService {
     this.pythonSocket.on('error', async error => {
       await this.errorLogService.insertEntry({
         errorMessage: error.message,
-        errorSource: 'Node: Python Client Socket',
+        errorSource: 'Node: Creating Python Client Socket',
         timeStamp: new Date().toString(),
       });
     });
@@ -262,7 +265,7 @@ export class LiveStreamService {
       if (error) {
         await this.errorLogService.insertEntry({
           errorMessage: error.message,
-          errorSource: 'Node: Python Client Socket',
+          errorSource: 'Node: Python Client Socket: Updating Video Length',
           timeStamp: new Date().toString(),
         });
       }
@@ -273,7 +276,7 @@ export class LiveStreamService {
       if (error) {
         await this.errorLogService.insertEntry({
           errorMessage: error.message,
-          errorSource: 'Node: Python Client Socket',
+          errorSource: 'Node: Python Client Socket: Rotating Stream',
           timeStamp: new Date().toString(),
         });
       }

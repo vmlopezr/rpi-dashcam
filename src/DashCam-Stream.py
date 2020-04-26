@@ -39,7 +39,7 @@ else:
 
 if RPI4 or DEV_ENV:
     # Program running on Unix PC or on RPI4. 
-    Caps = 'image/jpeg,width=1280,height=720,framerate=15/1 '
+    Caps = 'image/jpeg,width=1280,height=720,framerate=30/1 '
 else:
     # Program is running on RPI3 and lower. Decrease resolution and frame rate
     # due to ram limitation.
