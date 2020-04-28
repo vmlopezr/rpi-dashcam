@@ -37,3 +37,4 @@ lerna-debug.log*
 data/Thumbnail/*
 !data/Thumbnail/default-image.jpg
 !data/Thumbnail/.gitkeep
+www/

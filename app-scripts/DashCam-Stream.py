@@ -36,14 +36,6 @@ else:
     RPI4 = False
     ON_RPI = False
 
-# if RPI4 or DEV_ENV:
-#     # Program running on Unix PC or on RPI4. 
-#     Caps = 'image/jpeg,width=1280,height=720,framerate=30/1 '
-# else:
-#     # Program is running on RPI3 and lower. Decrease resolution and frame rate
-#     # due to ram limitation.
-#     Caps = 'image/jpeg,width=320,height=240,framerate=20/1 '
-
 IP_Address = sys.argv[1]
 PORT = int(sys.argv[2])
 CAMERA = sys.argv[3]
@@ -52,13 +44,10 @@ VIDEO_LENGTH = int(sys.argv[5])
 VERTICAL_FLIP = int(sys.argv[6])
 dirList = os.getcwd().split('/')
 
-if dirList[len(dirList) - 1] == 'src':
+if dirList[len(dirList) - 1] == 'app-scripts':
     RAN_BY_NODE = False
 else:
     RAN_BY_NODE = True
-
-print(CAMERA)
-sys.stdout.flush()
 
 if CAMERA == "Logitech-Webcam-HD-C920":
     Caps = 'image/jpeg,width=1280,height=720,framerate=30/1 '

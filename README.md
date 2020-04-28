@@ -1,11 +1,11 @@
 # RPI Webcam Interface
 
-<div style="text-align:justify">
-  <p>The following project was written to use USB Webcams with Raspberry Pi 3b+ 
-  and Raspberry Pi 4. The project has been developed using Raspbian images 
+<div>
+  <p style="text-align:justify">The following project was written to use USB Webcams with Raspberry Pi 3b+
+  and Raspberry Pi 4. The project has been developed using Raspbian images
   (both desktop and lite), and has yet to be tested with ubuntu. </p>
 
-  <p>The application serves a static website that allows control of the USB Webcam. The
+  <p style="text-align:justify">The application serves a static website that allows control of the USB Webcam. The
   Raspberry Pi is configured as an Access Point, so devices must be connected to the network.
   Recorded videos can be watched as well as downloaded onto your devices. Supported webcams
   can also be streamed to allow users to see the live feed while adjusting webcam settings.
@@ -14,7 +14,7 @@
   The live video streaming is only supported for the C920 and HD3000, until 
   settings for the cameras listed in the home page are tracked down and integrated. </p>
 
-  <p>The current the repository contains the backend server using nestJS. 
+  <p style="text-align:justify">The current the repository contains the backend server using nestJS. 
   Before running the server, the static files for the page must be unzipped 
   in the main repository. </p>
 </div>

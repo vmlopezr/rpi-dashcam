@@ -2210,7 +2210,7 @@
         "signature": "af43f1d20a34fa56542ce2093fd9af37cb4f3076a648b63fd46b1ffac8948c9e"
       },
       "../src/webcam/services/videostream/videostream.service.ts": {
-        "version": "e8787917632fafbcbf383a50c7e881b005dcb51b5a2550ee7e1dff0c9541e451",
+        "version": "f5e2a58e240a6e258e916c5d3876cd0a99f74f774006523df07c6eff7e57c4d6",
         "signature": "88dc7ce2bb32828e9d36861441dabb24d5837a7fc5028524f2cd2ec427c73ad2"
       },
       "../src/webcam/controllers/videostream.controller.ts": {
@@ -2226,7 +2226,7 @@
         "signature": "caaf7cd6886904fc109ff85a33e5a936240155ce352720ff4c870f6e27fc5536"
       },
       "../src/webcam/services/livestream/livestream.service.ts": {
-        "version": "3a5c9889dadabc8c8ffb7ddcd41cc12326721d0f2354eb5189c4ad4651334d08",
+        "version": "a832ed1a9a08da15d553f2161905d995f860170084fe878f0eabced0b436fc6e",
         "signature": "92c75f5a02f29e4fc8dd20893268c9fe0c218b40fab3ecb049cc685069194305"
       },
       "../src/webcam/controllers/livestream.controller.ts": {
@@ -2422,7 +2422,7 @@
         "signature": "8f1241f5d9f0d3d72117768b3c974e462840fbd85026fb66685078945404cf2f"
       },
       "../src/app.module.ts": {
-        "version": "ceef6ffb14c7797d12a0d78c083db895f81fe2a11f1e71a0892da9ba159769c6",
+        "version": "1e5b41280c06d770e036e36361886f7eff9748586ff5fccc7d0f046c1d13bf46",
         "signature": "b82491e2990291580288c5602d4c017238977749d52b17391f0e45d9a29be644"
       },
       "../src/main.ts": {

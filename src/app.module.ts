@@ -15,9 +15,9 @@ console.log(__dirname)
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'www'),
-    }),
+    // ServeStaticModule.forRoot({
+    //   rootPath: join(__dirname, '..', 'www'),
+    // }),
   ],
   controllers: [],
   providers: [],

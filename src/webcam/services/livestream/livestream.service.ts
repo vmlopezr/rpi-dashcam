@@ -177,7 +177,7 @@ export class LiveStreamService {
       this.isRecording = true;
       // Start python gstreamer process
       this.StreamProc = child.spawn('python3', [
-        './src/DashCam-Stream.py',
+        './app-scripts/DashCam-Stream.py',
         this.IPAddress,
         this.StreamPort.toString(),
         configData.camera.replace(/\s+/g, '-'),

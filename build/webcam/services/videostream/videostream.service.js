@@ -47,7 +47,7 @@ let VideoStreamService = class VideoStreamService {
         });
     }
     shutDown() {
-        child.spawn('sh', ['./src/cleanShutDown.sh']);
+        child.spawn('sh', ['./app-scripts/cleanShutDown.sh']);
     }
     streamVideo(req, res, filename) {
         const path = `./data/Recordings/${filename}`;

@@ -39,7 +39,7 @@ export class VideoStreamService {
     });
   }
   shutDown(): void {
-    child.spawn('sh', ['./src/cleanShutDown.sh']);
+    child.spawn('sh', ['./app-scripts/cleanShutDown.sh']);
   }
   // Stream the videos in chunks of 2MB
   streamVideo(req: Request, res: Response, filename: string): void {
