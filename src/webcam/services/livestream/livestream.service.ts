@@ -177,7 +177,7 @@ export class LiveStreamService {
       this.isRecording = true;
       // Start python gstreamer process
       this.StreamProc = child.spawn('python3', [
-        './app-scripts/DashCam-Stream.py',
+        './python/DashCam-Stream.py',
         this.IPAddress,
         this.StreamPort.toString(),
         configData.camera.replace(/\s+/g, '-'),
@@ -198,7 +198,7 @@ export class LiveStreamService {
 
       // View Process.stdout
       this.StreamProc.stdout?.on('data', (data: Buffer) => {
-        const response = data.toString('utf8').replace(/\s/g,'');
+        const response = data.toString('utf8').replace(/\s/g, '');
         if (response == 'SocketCreated\n') {
           this.createCommSocket();
         } else if (response == 'ServerStarted\n') {

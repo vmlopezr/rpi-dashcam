@@ -1,32 +1,46 @@
 # RPI Webcam Interface
 
-<div>
-  <p style="text-align:justify">The following project was written to use USB Webcams with Raspberry Pi 3b+
-  and Raspberry Pi 4. The project has been developed using Raspbian images
-  (both desktop and lite), and has yet to be tested with ubuntu. </p>
+<p style="text-align:justify">The project uses USB Webcams with Raspberry Pi 3b+
+  and Raspberry Pi 4 to record and stream over a raspberry pi access point. The project 
+  has been developed using Raspbian images (both desktop and lite).</p>
+<p style="text-align:justify">The application serves a static website that allows control of the USB Webcam. The
+Raspberry Pi is configured as an Access Point, so devices must be connected to the network.
+Recorded videos can be watched as well as downloaded onto your devices. Supported webcams
+can also be streamed to allow users to see the live feed while adjusting webcam settings.
+There is initial support for Logitech C920 and Microsoft LifeCam HD3000. 
+The application should be able to record with v4l2-compatible webcams. 
+The live video streaming is only supported for the C920 and HD3000, until 
+settings for the cameras listed in the home page are tracked down and integrated. </p>
 
-  <p style="text-align:justify">The application serves a static website that allows control of the USB Webcam. The
-  Raspberry Pi is configured as an Access Point, so devices must be connected to the network.
-  Recorded videos can be watched as well as downloaded onto your devices. Supported webcams
-  can also be streamed to allow users to see the live feed while adjusting webcam settings.
-  There is initial support for Logitech C920 and Microsoft LifeCam HD3000. 
-  The application should be able to record with v4l2-compatible webcams. 
-  The live video streaming is only supported for the C920 and HD3000, until 
-  settings for the cameras listed in the home page are tracked down and integrated. </p>
+<p style="text-align:justify">The current the repository contains the backend server using nestJS. 
+Before running the server, the static files for the page must be unzipped 
+in the main repository. </p>
 
-  <p style="text-align:justify">The current the repository contains the backend server using nestJS. 
-  Before running the server, the static files for the page must be unzipped 
-  in the main repository. </p>
-</div>
+The Application establishes the Raspberry Pi as a wireless Access Point.
 
-The application website can be reached on any browser using the following addresses:  
-* http://rpidashcam.pi  
-* Any http address with a domain of "pi", e.g: http://testcam.pi, http://anyaddress.pi, http://a.pi, etc.  
-* Any IP address, e.g:   192.168.10.2, 1.1.1.1, 2.2.2.2, etc.  
+<ul>
+  <li>Network SSID: RPIDASHCAM</li>
+  <li>Password: rpiDashCam</li>
+</ul>
+
+## Installing / Getting Started
+
+To install the necessary dependencies use the following:
+
+```bash
+$ sudo sh install-scripts/setup.sh
+```
+
+This will install gstreamer, v4l2-utils, dnsmasq, hostapt, i2c-tools and ntpdate.
+
+The application website can be reached on any browser using the following addresses:
+
+- http://rpidashcam.pi
+- Any http address with a domain of "pi", e.g: http://testcam.pi, http://anyaddress.pi, http://a.pi, etc.
+- Any IP address, e.g: 192.168.10.2, 1.1.1.1, 2.2.2.2, etc.
 
 Any IP address entered into the browser is redirected to the local application website.
 Any http address using domain "pi" is redirected to the local application website.
-
 
 The Front End repository can be found at https://github.com/vmlopezr/Dash_Cam_App.
 
@@ -37,23 +51,46 @@ This can be done with the following:
 $ sudo raspi-config
 ```
 
-The Application establishes the Raspberry Pi as a wireless Access Point.  
+The Application establishes the Raspberry Pi as a wireless Access Point.
+
 <ul>
   <li>Network SSID: RPIDASHCAM</li>
   <li>Password: rpiDashCam</li>
 </ul>
 
-## Install
-To install the necessary dependencies use the following:
-```bash
-$ sudo sh install-scripts/setup.sh
+## Developing
+
+### Built With
+
+- Ionic Framework
+- python3
+- gstreamer
+- sqlite3
+
+### Prerequisites
+
+What is needed to set up the dev environment. For instance, global dependencies or any other tools. include download links.
+
+### Setting up Dev
+
+### Building
+
+The project contains a build script in package.json, use a package manager to
+to build the project files.
+
+```shell
+* yarn build
+* npm run build
 ```
-This will install gstreamer, v4l2-utils, dnsmasq, hostapt, i2c-tools and ntpdate.
 
+The typescript files will be transpiled to javascript files in the build folder.
 
+### Running Application
 
+## Configuration
 
-
+Here you should write what are all of the configurations a user can enter when
+using the project.
 
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
@@ -84,3 +121,5 @@ This will install gstreamer, v4l2-utils, dnsmasq, hostapt, i2c-tools and ntpdate
 ## License
 
 Nest is [MIT licensed](LICENSE).
+
+![Logo of the project](./images/logo.sample.png)
