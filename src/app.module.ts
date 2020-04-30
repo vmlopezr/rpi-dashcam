@@ -4,7 +4,7 @@ import { WebcamModule } from './webcam/webcam.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-console.log(__dirname)
+console.log(__dirname);
 @Module({
   imports: [
     DataBaseModule,
@@ -15,9 +15,9 @@ console.log(__dirname)
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
-    // ServeStaticModule.forRoot({
-    //   rootPath: join(__dirname, '..', 'www'),
-    // }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'www'),
+    }),
   ],
   controllers: [],
   providers: [],

@@ -69,7 +69,11 @@ The Application establishes the Raspberry Pi as a wireless Access Point.
 
 ### Prerequisites
 
-What is needed to set up the dev environment. For instance, global dependencies or any other tools. include download links.
+The following tools are required to build the application:
+
+- Node Package Manager - yarn or npm
+- Nodejs
+- Python
 
 ### Setting up Dev
 
