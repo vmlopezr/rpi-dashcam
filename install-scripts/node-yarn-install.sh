@@ -5,7 +5,7 @@ printf "\n\nChecking for node...\n\n\n"
 command -v node >/dev/null 2>&1 || {
     #installing node
     echo "Installing nodejs..."
-    curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+    curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
     sudo apt -y install nodejs
 
     if command -v nodejs >/dev/null 2>&1

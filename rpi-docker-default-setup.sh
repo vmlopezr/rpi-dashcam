@@ -14,7 +14,8 @@ read -r -p "Enter the name of the docker image: " DOCKERIMAGE
 cp /usr/bin/qemu-arm-static "$(pwd)"
 
 DOCKERFILE="FROM arm32v7/debian:buster-slim
-COPY qemu-arm-static /usr/bin/qemu-arm-static
+# uncomment the line below if building on an x86 sytem
+# COPY qemu-arm-static /usr/bin/qemu-arm-static
 WORKDIR /usr/src/app
 CMD [\"/bin/bash\"]
 "

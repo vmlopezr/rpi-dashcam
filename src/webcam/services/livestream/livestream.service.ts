@@ -117,11 +117,11 @@ export class LiveStreamService {
     }
   }
   setVideoSocketListeners(): void {
-    // Connect to gstreamer tcp socket at port 50002
-    this.tcpStreamSocket.connect(this.StreamPort, this.IPAddress, () => {
-      // Listen at port 50003 for video frame requests from front-end
+    // Connect to gstreamer tcp socket at port 50002. solely communicates to python.
+    this.tcpStreamSocket.connect(this.StreamPort, '127.0.0.1', () => { // set to 127.0.0.1
+      // Listen at port 50003 on any interface for video frame requests from front-end
       this.frontEndStreamProvider = socketio.listen(
-        http.createServer().listen(this.FrontEndStreamPort, this.IPAddress),
+        http.createServer().listen(this.FrontEndStreamPort, '0.0.0.0'),
       );
       this.dicer = new Dicer({ boundary: '--videoboundary' });
       //Dicer object will parse video data
@@ -178,7 +178,7 @@ export class LiveStreamService {
       // Start python gstreamer process
       this.StreamProc = child.spawn('python3', [
         './python/DashCam-Stream.py',
-        this.IPAddress,
+        '0.0.0.0', 
         this.StreamPort.toString(),
         configData.camera.replace(/\s+/g, '-'),
         configData.Device,
@@ -199,11 +199,12 @@ export class LiveStreamService {
       // View Process.stdout
       this.StreamProc.stdout?.on('data', (data: Buffer) => {
         const response = data.toString('utf8').replace(/\s/g, '');
-        if (response == 'SocketCreated\n') {
+        if (response == 'SocketCreated') {
           this.createCommSocket();
-        } else if (response == 'ServerStarted\n') {
+        } else if (response == 'ServerStarted') {
           this.startLiveStreamSocket();
         } else {
+          console.log('default message from python:')
           console.log(response);
         }
       });
@@ -249,7 +250,7 @@ export class LiveStreamService {
   }
   createCommSocket(): void {
     this.pythonSocket = new net.Socket();
-    this.pythonSocket.connect(10000, this.IPAddress, () => {
+    this.pythonSocket.connect(10000, '127.0.0.1', () => {
       console.log('Connected to python server');
     });
     this.pythonSocket.on('error', async error => {
