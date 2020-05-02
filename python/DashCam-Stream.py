@@ -15,26 +15,17 @@ gi.require_version('Gst', '1.0')  # nopep8
 from gi.repository import Gst, GLib
 
 Gst.init(None)
-if os.path.isfile("/proc/device-tree/model"):
-    # Verify if the python program is running on an RPI or on an PC
-    stream = Popen("cat /proc/device-tree/model", shell=True, stdout=PIPE, stderr=PIPE)
-    stdout, stderr = stream.communicate()
-    if len(stderr) == 0:
-        ON_RPI = True
-        DEV_ENV = False
-        RPI_MODEL = stdout.decode('utf-8')
-        if "Pi 4" in RPI_MODEL:
-            RPI4 = True
-        else: 
-            RPI4 = False
-    else:
-        DEV_ENV = True
-        ON_RPI = False  
-        RPI4 = False  
+stream = Popen("cat /etc/os-release", shell=True, stdout=PIPE, stderr=PIPE)
+stdout, stderr = stream.communicate()
+RPI_MODEL = stdout.decode('utf-8')
+if "Debian" in RPI_MODEL:
+    RPI4 = True
+    DEV_ENV=False
+    ON_RPI=True
 else:
     DEV_ENV = True
-    RPI4 = False
     ON_RPI = False
+    RPI4 = False
 
 IP_Address = sys.argv[1]
 PORT = int(sys.argv[2])
