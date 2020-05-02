@@ -14,7 +14,7 @@ interface wlan0
     nohook wpa_supplicant"
 
 # Append to /etc/dhcpcd.conf if 
-grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 || {
+grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 && {
 
     printf "\nSetting Static IP address for wifi...\n\n"
     sudo echo "$WAN_INTERFACE" >> /etc/dhcpcd.conf
