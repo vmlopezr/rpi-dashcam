@@ -15,7 +15,7 @@ interface wlan0
 
 # Append to /etc/dhcpcd.conf if 
 grep -F "$WAN_INTERFACE" /etc/dhcpcd.conf >/dev/null 2>&1 && {
-
+    sudo mv /etc/dhcpcd.conf /etc/dhcpcd.conf.orig
     printf "\nSetting Static IP address for wifi...\n\n"
     sudo echo "$WAN_INTERFACE" >> /etc/dhcpcd.conf
 
@@ -90,8 +90,8 @@ wpa=2
 wpa_key_mgmt=WPA-PSK
 wpa_pairwise=TKIP
 rsn_pairwise=CCMP
-ssid=RPIDASHCAM
-wpa_passphrase=rpiDashCam
+ssid=RPI-Webcam-Viewer
+wpa_passphrase=rpiCamView
 "
 
 sudo echo "$HOSTAPD_CONFIG" > /etc/hostapd/hostapd.conf
