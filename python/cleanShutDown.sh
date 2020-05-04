@@ -2,4 +2,4 @@
 
 pkill --signal SIGINT node
 sleep 3
-#sudo shutdown -h now
+sudo shutdown -h now

@@ -7,7 +7,8 @@ sudo apt install -y dnsmasq hostapd
 sudo systemctl stop dnsmasq
 sudo systemctl stop hostapd
 
-# Set wlan0 static IP and subnet
+# DHCPCD update
+# Set wlan0 interface: static IP and subnet
 WAN_INTERFACE="
 interface wlan0
     static ip_address=192.168.10.1/24

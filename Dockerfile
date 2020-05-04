@@ -33,6 +33,7 @@ RUN apt-get update && apt-get upgrade -y \
 COPY www /usr/src/app/www
 COPY python /usr/src/app/python
 
+ENV NODE_ENV=production
 EXPOSE 50000
 EXPOSE 50003
 

@@ -4,7 +4,7 @@ import { Response, Request } from 'express';
 import {
   VideoStreamService,
   DirInfo,
-} from '../services/videostream/videostream.service';
+} from '../services/videostream.service';
 
 @Controller('/videos')
 export class VideoStreamController {

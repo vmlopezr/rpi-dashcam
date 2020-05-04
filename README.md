@@ -57,7 +57,7 @@ To install the necessary dependencies, run the following script:
 $ sudo sh install.sh
 ```
 
-The script installs gstreamer, v4l2-utils, dnsmasq, hostapt, i2c-tools, ntpdate as well as the [Real-Time Clock](#Real-Time-Clock).
+The script installs gstreamer, v4l2-utils, dnsmasq, hostapt, i2c-tools, ntpdate as well as the [Real-Time Clock](#Real-Time-Clock) configuration.
 
 The Raspberry Pi is set up as a Wifi Access Point. A minimal DNS server is ran using dnsmasq, and iptables is set
 to redirect http traffic on the wireless AP to the application.
@@ -175,6 +175,73 @@ yarn startTS
 
 npm run startTS
 ```
+To start the front-end development server run either of the following:
+
+```
+Using Ionic CLI:
+  $ ionic serve    
+
+Using npm: 
+  $ npm run start
+```
+Using ionic serve will start a development server at port localhost:8100.  
+Using npm run start will start a development server at port localhost:4200.  
+
+**Note:**  The application needs the back-end server to retrieve data saved on the sqlite db. Both the front-end and back-end development servers need to run concurrently.
+When running on development, the frontend initiates the data retrieval via GET request to localhost.  
+When running on production, it is expected for the application to run on a Raspberry Pi. As built on the repository, the initial data retrieval is made via GET request to 192.168.10.1, which is the address of the Raspberry Pi wlan0 interface after the Access Point install.
+
+### Modifying Raspberry Pi wlan0 Interface IP Address
+
+To change the IP address of the wlan0 interface for the application, there are two main modification that must be made:
+
+1. Modify the chosen IP address found in [AP-install.sh](./install-scripts/AP-install.sh) under the ***dhcpcd.conf*** modifications.
+```
+# DHCPCD update
+# Set wlan0 interface: static IP and subnet
+WAN_INTERFACE="
+interface wlan0
+    static ip_address=192.168.10.1/24
+    nohook wpa_supplicant"
+```
+
+2. On the [back-end server](https://github.com/vmlopezr/rpi-dashcam), the python script [dh-update.py](https://github.com/vmlopezr/rpi-dashcam/blob/master/python/db-update.py) can be used to update certain application settings. The following is the help message for the script:
+```
+ usage: db-update.py [-h] [-cam CAMERA] [-dev DEVICE] [-nport NODEPORT] [-ipaddr IPADDRESS] [-streamport TCPSTREAMPORT]
+                    [-LiveStreamPort LIVESTREAMPORT] [-view]
+
+optional arguments:
+  -h, --help            This script is used to update the rpidashcam sqlite database. Enter the argument with the desired value to update it.
+
+  -cam CAMERA, --camera CAMERA
+                        The webcam model to be used with the application
+
+  -dev DEVICE, --Device DEVICE
+                        The linux device denoting the USB camera. Can be found in /dev/.  
+                        For webcams, this is usually listed as /dev/video*
+
+  -nport NODEPORT, --NodePort NODEPORT
+                        The port at which the back-end server will listen to.
+
+  -ipaddr IPADDRESS, --IPAddress IPADDRESS
+                        The IP Address of the host running the application.
+
+  -streamport TCPSTREAMPORT, --TCPStreamPort TCPSTREAMPORT
+                        The Port at which node listen to the TCP video feed from gstreamer.
+
+  -LiveStreamPort LIVESTREAMPORT, --LiveStreamPort LIVESTREAMPORT
+                        The Port at which socket.io listens to stream live camera feed to a webrowser.
+
+  -view, --view         "View the current values of the application settings
+```
+
+
+Update the server IP address to the new address with the following:
+```
+python3 app-ipaddr-update.py -ipaddr "IP_ADDRESS"
+```
+where IP_ADDRESS is the intended address of the development host.
+
 
 ### Uninstalling
 

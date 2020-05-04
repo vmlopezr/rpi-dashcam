@@ -14,7 +14,10 @@ export class AppSettingsService {
     return await this.appSettingsRepo.update(settings.id, settings);
   }
   async retrieveData(): Promise<AppSettings> {
-    const result = await this.appSettingsRepo.find({ id: 1 });
+    let result = await this.appSettingsRepo.find({ id: 1 });
+    if (process.env.NODE_ENV !== 'production') {
+      result[0].IPAddress="localhost"
+    }
     return result[0];
   }
 }

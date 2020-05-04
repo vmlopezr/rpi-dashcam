@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
-import { LiveStreamService } from '../services/livestream/livestream.service';
-import { Data } from '../services/livestream/livestream.service';
+import { LiveStreamService } from '../services/livestream.service';
+import { Data } from '../services/livestream.service';
 
 @Controller('/livestream')
 export class LiveStreamController {
