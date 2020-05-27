@@ -20,8 +20,8 @@ stdout, stderr = stream.communicate()
 RPI_MODEL = stdout.decode('utf-8')
 if "Debian" in RPI_MODEL:
     RPI4 = True
-    DEV_ENV=False
-    ON_RPI=True
+    DEV_ENV = False
+    ON_RPI = True
 else:
     DEV_ENV = True
     ON_RPI = False
@@ -43,9 +43,10 @@ else:
 if CAMERA == "Logitech-Webcam-HD-C920":
     Caps = 'image/jpeg,width=1280,height=720,framerate=30/1 '
 elif CAMERA == "Microsoft-LifeCam-HD-3000":
-    Caps = 'image/jpeg,width=320,height=240,framerate=20/1 '
+    Caps = 'image/jpeg,width=1280,height=720,framerate=20/1 '
 else:
-    Caps = 'image/jpeg,width=320,height=240,framerate=15/1 '
+    Caps = 'image/jpeg,width=1280,height=720,framerate=20/1 '
+
 
 class WebcamRecord():
     def __init__(self):
@@ -492,7 +493,7 @@ class WebcamRecord():
         )
 
     def on_error(self, bus, msg):
-        print('on_error():', msg.parse_error(),file=sys.stderr)
+        print('on_error():', msg.parse_error(), file=sys.stderr)
         sys.stderr.flush()
 
     def probe_block(self, pad, buf):

@@ -1,13 +1,15 @@
 {
-    "python.pythonPath": "/usr/bin/python3",
-    "python.linting.pycodestylePath": "~/.local/bin/pycodestyle",
-    "editor.formatOnSave": true,
-    "python.linting.pycodestyleEnabled": true,
-    "editor.rulers": [80],
-    "editor.mouseWheelZoom": true,
-    "editor.fontFamily": "Roboto Mono",
-    "editor.fontWeight": "bold",
-    "editor.acceptSuggestionOnCommitCharacter": false,
-    "editor.minimap.maxColumn": 80,
-    "eslint.format.enable": true
+  "python.pythonPath": "/usr/bin/python3",
+  "python.linting.pycodestylePath": "~/.local/bin/pycodestyle",
+  "editor.formatOnSave": true,
+  "python.linting.pycodestyleEnabled": true,
+  "editor.rulers": [80],
+  "editor.mouseWheelZoom": true,
+  "editor.fontFamily": "Roboto Mono",
+  "editor.fontWeight": "bold",
+  "editor.acceptSuggestionOnCommitCharacter": false,
+  "editor.minimap.maxColumn": 80,
+  "eslint.format.enable": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.enabled": true
 }
