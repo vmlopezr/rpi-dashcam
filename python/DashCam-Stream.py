@@ -173,9 +173,6 @@ class WebcamRecord():
         # self.queue.link(self.sink)
 
     def create_image_capture_pipeline(self):
-        # self.capture_pipe = Gst.parse_bin_from_description(
-        #     "queue name=capture_queue ! multifilesink name=jpegcapture " +
-        #     "location=test.jpg", True)
         self.capture_pipe = Gst.parse_bin_from_description(
             "queue name=capture_queue ! filesink name=jpegcapture " +
             "location=initial.jpg", True)

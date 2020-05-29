@@ -68,6 +68,7 @@ command -v gst-inspect-1.0 >/dev/null 2>&1 || {
     libgirepository1.0-dev \
     libcairo2-dev \
     gir1.2-gstreamer-1.0
+    # gstreamer1.0-libav
 }
 
 #Install Access Point

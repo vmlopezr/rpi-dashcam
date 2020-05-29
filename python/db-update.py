@@ -61,7 +61,7 @@ script_path = os.path.dirname(os.path.abspath(__file__))
 char = "/"
 split_path = script_path.split(char)
 split_path.pop()
-split_path.extend(["data", "camData.sql"])
+split_path.extend(["data", "camData.SQLite"])
 db_Path = char.join(split_path)
 
 # Start sqlite db connection

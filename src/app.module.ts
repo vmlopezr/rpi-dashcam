@@ -10,7 +10,7 @@ import { join } from 'path';
     WebcamModule,
     TypeOrmModule.forRoot({
       type: 'sqlite',
-      database: './data/camData.sql',
+      database: './data/camData.SQLite',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
     }),
