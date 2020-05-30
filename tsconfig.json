@@ -9,8 +9,9 @@
     "sourceMap": true,
     "allowJs": true,
     "outDir": "./build",
-    // "rootDir": "./src",
+    "rootDir": "./src",
     "incremental": true
   },
-  "exclude": ["node_modules", "build", "data", "www"]
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules", "build", "data", "./www/**/*.js"]
 }
