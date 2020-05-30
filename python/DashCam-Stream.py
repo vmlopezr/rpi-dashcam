@@ -18,7 +18,7 @@ Gst.init(None)
 stream = Popen("cat /etc/os-release", shell=True, stdout=PIPE, stderr=PIPE)
 stdout, stderr = stream.communicate()
 RPI_MODEL = stdout.decode('utf-8')
-if "Debian" in RPI_MODEL:
+if "debian" in RPI_MODEL:
     RPI4 = True
     DEV_ENV = False
     ON_RPI = True
@@ -41,9 +41,9 @@ else:
     RAN_BY_NODE = True
 
 if CAMERA == "Logitech-Webcam-HD-C920":
-    Caps = 'image/jpeg,width=1280,height=720,framerate=20/1 '
+    Caps = 'image/jpeg,width=1280,height=720,framerate=30/1 '
 elif CAMERA == "Microsoft-LifeCam-HD-3000":
-    Caps = 'image/jpeg,width=1280,height=720,framerate=20/1 '
+    Caps = 'image/jpeg,width=1280,height=720,framerate=30/1 '
 else:
     Caps = 'image/jpeg,width=1280,height=720,framerate=20/1 '
 
@@ -198,8 +198,6 @@ class WebcamRecord():
 
         # Running on RaspberryPi
         if ON_RPI:
-            print('using v4l2enc')
-            sys.stdout.flush()
             self.main_recordpipe = Gst.parse_bin_from_description(
                 "queue name=filequeue ! deinterlace " +
                 "! v4l2h264enc name=encoder " +
