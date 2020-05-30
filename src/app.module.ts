@@ -4,6 +4,7 @@ import { WebcamModule } from './webcam/webcam.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+
 @Module({
   imports: [
     DataBaseModule,

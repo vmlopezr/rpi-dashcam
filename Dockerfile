@@ -29,8 +29,8 @@ RUN apt-get update && apt-get upgrade -y \
     python3 \
     gstreamer1.0-x \
     v4l-utils && rm -rf /var/cache/apt/* && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-COPY www /usr/src/app/www
+# Note: new version of nest attempts to copy www file. remove it and add the real one.
+COPY www /usr/src/app/www 
 COPY python /usr/src/app/python
 
 ENV NODE_ENV=production
