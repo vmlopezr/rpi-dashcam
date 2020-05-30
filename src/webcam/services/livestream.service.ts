@@ -69,6 +69,7 @@ export class LiveStreamService {
     if (!this.tcpStreamSocket)
       this.pythonSocket.write('start', async error => {
         if (error) {
+          console.log(error.message);
           await this.errorLogService.insertEntry({
             errorMessage: error.message,
             errorSource: 'Node: Starting Python Client Socket',
@@ -79,7 +80,6 @@ export class LiveStreamService {
         }
       });
   }
-
   // Creates the socket when the python process successfully starts the livestream server.
   // This is caught by the process stdout listener
   startLiveStreamSocket(): void {
@@ -116,8 +116,10 @@ export class LiveStreamService {
   }
   setVideoSocketListeners(): void {
     // Connect to gstreamer tcp socket at port 50002. solely communicates to python.
-    this.tcpStreamSocket.connect(this.StreamPort, '127.0.0.1', () => { // set to 127.0.0.1
+    this.tcpStreamSocket.connect(this.StreamPort, '127.0.0.1', () => {
+      // set to 127.0.0.1
       // Listen at port 50003 on any interface for video frame requests from front-end
+
       this.frontEndStreamProvider = socketio.listen(
         http.createServer().listen(this.FrontEndStreamPort, '0.0.0.0'),
       );
@@ -176,7 +178,7 @@ export class LiveStreamService {
       // Start python gstreamer process
       this.StreamProc = child.spawn('python3', [
         './python/DashCam-Stream.py',
-        '0.0.0.0', 
+        '0.0.0.0',
         this.StreamPort.toString(),
         configData.camera.replace(/\s+/g, '-'),
         configData.Device,
@@ -198,12 +200,10 @@ export class LiveStreamService {
       this.StreamProc.stdout?.on('data', (data: Buffer) => {
         const response = data.toString('utf8').replace(/\s/g, '');
         if (response == 'SocketCreated') {
-          console.log('create socket')
           this.createCommSocket();
         } else if (response == 'ServerStarted') {
           this.startLiveStreamSocket();
         } else {
-          console.log('default message from python:')
           console.log(response);
         }
       });
@@ -255,7 +255,7 @@ export class LiveStreamService {
     this.pythonSocket.on('error', async error => {
       await this.errorLogService.insertEntry({
         errorMessage: error.message,
-        errorSource: 'Node: Creating Python Client Socket',
+        errorSource: 'Node: Error received from python gstreamer process',
         timeStamp: new Date().toString(),
       });
     });
@@ -286,15 +286,12 @@ export class LiveStreamService {
     child.exec(command, async (error, stdout, stderr) => {
       if (error || stderr) {
         this.errCount++;
-        // console.log('process error: ' + error);
-        console.log('error count: ' + this.errCount);
         await this.errorLogService.insertEntry({
           errorMessage: error.message,
           errorSource: 'v4l2-ctl Error',
           timeStamp: new Date().toString(),
         });
         if (this.errCount < 2) {
-          console.log('inside if');
           this.stopLiveStreamServer();
           this.clientCounter = 0;
         } else {
