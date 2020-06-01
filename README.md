@@ -20,7 +20,7 @@ in the main repository.
 
 The Application establishes the Raspberry Pi as a wireless Access Point.
 
-- Network SSID: **_RPI_Webcam_View_**
+- Network SSID: **_RPI_Webcam_Viewer_**
 - Password: **_rpiCamView_**
 
 # **Table of Contents**
@@ -188,7 +188,7 @@ Any IP address entered into the browser is redirected to the local application w
 Any http address using domain "pi" is redirected to the local application website.
 The access Point information is shown below:
 
-- Network SSID: **_RPI-Webcam-Viewer_**
+- Network SSID: **_RPI_Webcam_Viewer_**
 - Password: **_rpiCamView_**
 
 To change the network SSID and password, update the following settings near the end of the script ["AP-install.sh"](./install-scripts/AP-install.sh).
