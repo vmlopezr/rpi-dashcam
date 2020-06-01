@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Response, Request } from 'express';
 import * as fs from 'fs';
-import * as child from 'child_process';
 import { promisify } from 'util';
 import { ErrorLogService } from '../../database/services/error-log-service/error-log.service';
 function readDir(directory: string): Promise<string[]> {
@@ -14,11 +13,18 @@ const maxchunksize = 1024 * 1024;
 @Injectable()
 export class VideoStreamService {
   constructor(private errorLogService: ErrorLogService) {}
-  /** Return a list of filenames contained in the Recordings directory of data. */
+  /** Return a list of filenames contained in the Recordings directory of data sorted by most recentll. */
   async getFiles(): Promise<DirInfo> {
-    const files = await readDir('./data/Recordings');
+    const dir = './data/Recordings/';
+    const files = await readDir(dir);
     const excludeIDX = files.indexOf('.gitkeep');
     files.splice(excludeIDX, 1);
+    files.sort((a, b) => {
+      return (
+        fs.statSync(dir + b).mtime.getTime() -
+        fs.statSync(dir + a).mtime.getTime()
+      );
+    });
     return { data: files };
   }
   /** Receive input image filename and pipe it via the response object.*/

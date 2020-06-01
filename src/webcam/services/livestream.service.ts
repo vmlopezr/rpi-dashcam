@@ -260,7 +260,6 @@ export class LiveStreamService {
     }
     // Clean up socket used to receive livestream feed from python process
     if (this.tcpStreamSocket) {
-            timeStamp: new Date().toString(),
       this.tcpStreamSocket.removeAllListeners();
       this.tcpStreamSocket.destroy();
       this.tcpStreamSocket = null;
