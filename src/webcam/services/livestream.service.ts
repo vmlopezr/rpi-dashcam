@@ -60,8 +60,7 @@ export class LiveStreamService {
   }
   /** Send SIGINT to python process to force it to cleanly end recording and save video.*/
   async cleanExit(): Promise<void> {
-    this.appSettingsService.update({ recordingState: 'OFF' });
-
+    await this.appSettingsService.update({ id: 1, recordingState: 'OFF' });
     this.StreamProc?.kill('SIGINT');
     this.StreamProc?.on('exit', () => {
       console.log('python process exited ');
