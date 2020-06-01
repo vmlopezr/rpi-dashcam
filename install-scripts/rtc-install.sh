@@ -23,6 +23,5 @@ exit 0
 grep -F "hwclock -s" /etc/rc.local || {
     # write before the last line
     sudo sed -i '/exit 0/d' /etc/rc.local
-    #sudo echo "$RTCSTARTUP" >> /etc/rc.local
     echo "$RTCSTARTUP" | sudo tee -a /etc/rc.local
 }

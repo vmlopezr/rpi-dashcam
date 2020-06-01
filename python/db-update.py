@@ -68,7 +68,7 @@ db_Path = char.join(split_path)
 connection = lite.connect(db_Path)
 cursor = connection.cursor()
 
-# Display the app_settings table contents
+# Display the app_settings table contents if argument view was entered
 if args.view:
     cursor.execute("SELECT * FROM app_settings")
     data = cursor.fetchall()
@@ -76,12 +76,15 @@ if args.view:
     printData(data)
 else:
     # Update columns based on the arguments entered
-    cursor.execute(SQlite_command)
-    cursor.execute("SELECT * FROM app_settings")
-    data = cursor.fetchall()
-    print("""The application IP address has been updated.
-        The new settings in the db are: """)
-    printData(data)
+    if len(sys.argv) > 1:
+        cursor.execute(SQlite_command)
+        cursor.execute("SELECT * FROM app_settings")
+        data = cursor.fetchall()
+        print("The new settings in the db are:")
+        printData(data)
+    # Display help message if no arguments
+    else:
+        parser.print_help(sys.stderr)
 
 connection.commit()
 connection.close()

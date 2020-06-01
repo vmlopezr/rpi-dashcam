@@ -45,26 +45,29 @@ export class LiveStreamService {
     this.frontEndStreamProvider = null;
     this.isRecording = false;
     this.initializeNetworkData();
-    process.on('SIGINT', () => {
-      console.log('node received SIGINT');
-      if (this.isRecording) this.cleanExit();
-      process.exit();
-    });
   }
+  /** Retrieve app settings network data from the database */
   async initializeNetworkData(): Promise<void> {
     const data = await this.appSettingsService.retrieveData();
     this.IPAddress = data.IPAddress;
     this.StreamPort = data.TCPStreamPort;
     this.FrontEndStreamPort = data.LiveStreamPort;
   }
+  /** Clean up sockets and python process and exit the main node process.*/
+  shutDown(): void {
+    console.log('Exiting RPI-Dashcam Application');
+    if (this.isRecording) this.cleanExit();
+    setTimeout(() => process.exit(), 3000);
+  }
+  /** Send SIGINT to python process to force it to cleanly end recording and save video.*/
   cleanExit(): void {
     this.StreamProc.kill('SIGINT');
     this.StreamProc.on('exit', () => {
       console.log('python process exited ');
     });
   }
-
-  // Communicates to the python process to start the LiveStream server
+  /** Send the python process a "start" message to connect the livestream pipeline
+   * to the main pipeline to start serving the webcam feed. */
   startLiveStreamServer(): void {
     if (!this.tcpStreamSocket)
       this.pythonSocket.write('start', async error => {
@@ -80,12 +83,12 @@ export class LiveStreamService {
         }
       });
   }
-  // Creates the socket when the python process successfully starts the livestream server.
-  // This is caught by the process stdout listener
+  /** Create the livestream socket used to send data to the front end*/
   startLiveStreamSocket(): void {
     this.tcpStreamSocket = new net.Socket();
     this.setVideoSocketListeners();
   }
+  /** Stop the livestream server when there is only one client connect. Decrease client count otherwise.*/
   stopLiveStreamServer(): void {
     this.clientCounter = this.clientCounter - 1;
     if (this.errCount > 0) {
@@ -114,12 +117,11 @@ export class LiveStreamService {
       this.clientCounter = 0;
     }
   }
+  /** Set the listeners for the livestream socket */
   setVideoSocketListeners(): void {
     // Connect to gstreamer tcp socket at port 50002. solely communicates to python.
     this.tcpStreamSocket.connect(this.StreamPort, '127.0.0.1', () => {
-      // set to 127.0.0.1
-      // Listen at port 50003 on any interface for video frame requests from front-end
-
+      // Listen at port 50003 on any interface for video frame requests from front-end.
       this.frontEndStreamProvider = socketio.listen(
         http.createServer().listen(this.FrontEndStreamPort, '0.0.0.0'),
       );
@@ -134,6 +136,7 @@ export class LiveStreamService {
       this.tcpStreamSocket.pipe(this.dicer);
     });
   }
+  /** Process the part data received by Dicer into base64 strings used for the image tag in the front end.*/
   onPartReceive = (part: Dicer.PartStream): void => {
     let frameEncoded = '';
     part.setEncoding('base64');
@@ -145,7 +148,7 @@ export class LiveStreamService {
       this.frontEndStreamProvider?.emit('image', frameEncoded);
     });
   };
-
+  /** Return the current orientation and length data from the database based on the input camera name.*/
   async getVideoOrientation(camera: string): Promise<CamInfo> {
     if (camera === 'Logitech Webcam HD C920') {
       const data = await this.logitechC920Service.retrieveData();
@@ -167,6 +170,7 @@ export class LiveStreamService {
       };
     }
   }
+  /** Start the python gstreamer process to start recording on the webcam. */
   async startRecording(): Promise<void> {
     if (this.isRecording === false) {
       // Retrieve DB data
@@ -218,6 +222,10 @@ export class LiveStreamService {
       });
     }
   }
+  /** Stop the python gstreamer process by sending SIGINT to allow its handler to
+   * cleanly finish recording the current video. Clean up the socket used to communicate
+   * to the python process.
+   */
   async stopRecording(): Promise<void> {
     await this.appSettingsService.update({ id: 1, recordingState: 'OFF' });
     this.isRecording = false;
@@ -247,6 +255,9 @@ export class LiveStreamService {
       this.tcpStreamSocket = null;
     }
   }
+  /** Create the python socket used to start, stop, rotate and set video length for the
+   * gstreamer pipeline.
+   */
   createCommSocket(): void {
     this.pythonSocket = new net.Socket();
     this.pythonSocket.connect(10000, '127.0.0.1', () => {
@@ -260,6 +271,7 @@ export class LiveStreamService {
       });
     });
   }
+  /** Update the video length for the python gstreamer process.*/
   updateVideoLength(command: string): void {
     this.pythonSocket.write(command, async error => {
       if (error) {
@@ -271,6 +283,7 @@ export class LiveStreamService {
       }
     });
   }
+  /** Send command to the python gstreamer pipeline to rotate the video feed vertically by 180 degrees.*/
   rotateStream(verticalFlip: number): void {
     this.pythonSocket.write('flip ' + verticalFlip, async error => {
       if (error) {
@@ -282,6 +295,7 @@ export class LiveStreamService {
       }
     });
   }
+  /** Run the input v4l2-ctl command to update the camera settings while recording.*/
   updateCamSettings(command: string): void {
     child.exec(command, async (error, stdout, stderr) => {
       if (error || stderr) {

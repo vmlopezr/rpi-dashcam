@@ -44,4 +44,8 @@ export class LiveStreamController {
   stopServer(): void {
     this.livestreamService.stopLiveStreamServer();
   }
+  @Get('/shutdown')
+  shutDown(): void {
+    this.livestreamService.shutDown();
+  }
 }

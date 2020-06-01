@@ -14,12 +14,14 @@ const maxchunksize = 1024 * 1024;
 @Injectable()
 export class VideoStreamService {
   constructor(private errorLogService: ErrorLogService) {}
+  /** Return a list of filenames contained in the Recordings directory of data. */
   async getFiles(): Promise<DirInfo> {
     const files = await readDir('./data/Recordings');
     const excludeIDX = files.indexOf('.gitkeep');
     files.splice(excludeIDX, 1);
     return { data: files };
   }
+  /** Receive input image filename and pipe it via the response object.*/
   async serveImage(res: Response, image: string): Promise<void> {
     const imagepath = `./data/Thumbnail/${image}`;
 
@@ -28,6 +30,9 @@ export class VideoStreamService {
       else fs.createReadStream('./data/Thumbnail/default-image.jpg').pipe(res);
     });
   }
+  /** Receive the video filename and use the response object download command to
+   * allow the user to download it to their device.
+   */
   async clientDownload(res: Response, filename: string): Promise<void> {
     const videoPath = `./data/Recordings/${filename}`;
 
@@ -38,10 +43,7 @@ export class VideoStreamService {
       }
     });
   }
-  shutDown(): void {
-    child.spawn('sh', ['./python/cleanShutDown.sh']);
-  }
-  // Stream the videos in chunks of 2MB
+  /** Based on the input video filename, stream the video by 1MB chunks to the front end.*/
   streamVideo(req: Request, res: Response, filename: string): void {
     const path = `./data/Recordings/${filename}`;
     // const stat = fs.statSync(path);
@@ -97,13 +99,14 @@ export class VideoStreamService {
       }
     });
   }
+  /** Receive input filename (without extension) and prepare paths with extensions {.mp4, .jpg}*/
   deleteFiles(filename: string): void {
     const videoPath = `./data/Recordings/${filename}.mp4`;
     const imagePath = `./data/Thumbnail/${filename}.jpg`;
     this.deleteFile(imagePath);
     this.deleteFile(videoPath);
   }
-
+  /** Detelete the input filename in the system.*/
   deleteFile(filename: string): void {
     fs.exists(filename, exists => {
       if (exists) {
