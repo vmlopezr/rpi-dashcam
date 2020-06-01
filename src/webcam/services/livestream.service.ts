@@ -29,7 +29,6 @@ export class LiveStreamService {
   StreamProc!: child.ChildProcess;
   SettingsProc!: child.ChildProcess;
   clientCounter: number;
-  isRecording: boolean;
   errCount: number;
   constructor(
     private appSettingsService: AppSettingsService,
@@ -43,7 +42,6 @@ export class LiveStreamService {
     this.tcpStreamSocket = null;
     this.StreamProc = null;
     this.frontEndStreamProvider = null;
-    this.isRecording = false;
     this.initializeNetworkData();
   }
   /** Retrieve app settings network data from the database */
@@ -56,66 +54,25 @@ export class LiveStreamService {
   /** Clean up sockets and python process and exit the main node process.*/
   shutDown(): void {
     console.log('Exiting RPI-Dashcam Application');
-    if (this.isRecording) this.cleanExit();
+    const isRecording = this.isRecording();
+    if (isRecording) this.cleanExit();
     setTimeout(() => process.exit(), 3000);
   }
   /** Send SIGINT to python process to force it to cleanly end recording and save video.*/
-  cleanExit(): void {
+  async cleanExit(): Promise<void> {
+    this.appSettingsService.update({ recordingState: 'OFF' });
+
     this.StreamProc.kill('SIGINT');
     this.StreamProc.on('exit', () => {
       console.log('python process exited ');
     });
+    this.StreamProc = null;
   }
-  /** Send the python process a "start" message to connect the livestream pipeline
-   * to the main pipeline to start serving the webcam feed. */
-  startLiveStreamServer(): void {
-    if (!this.tcpStreamSocket)
-      this.pythonSocket.write('start', async error => {
-        if (error) {
-          console.log(error.message);
-          await this.errorLogService.insertEntry({
-            errorMessage: error.message,
-            errorSource: 'Node: Starting Python Client Socket',
-            timeStamp: new Date().toString(),
-          });
-        } else {
-          this.clientCounter++;
-        }
-      });
-  }
+
   /** Create the livestream socket used to send data to the front end*/
   startLiveStreamSocket(): void {
     this.tcpStreamSocket = new net.Socket();
     this.setVideoSocketListeners();
-  }
-  /** Stop the livestream server when there is only one client connect. Decrease client count otherwise.*/
-  stopLiveStreamServer(): void {
-    this.clientCounter = this.clientCounter - 1;
-    if (this.errCount > 0) {
-      this.clientCounter = 0;
-    }
-    if (this.clientCounter <= 0) {
-      if (this.frontEndStreamProvider != null) {
-        this.frontEndStreamProvider.close();
-        this.dicer.destroy();
-      }
-
-      if (this.tcpStreamSocket != null) {
-        this.pythonSocket.write('stop', async error => {
-          if (error) {
-            await this.errorLogService.insertEntry({
-              errorMessage: error.message,
-              errorSource: 'Node: Stopping Python Client Socket',
-              timeStamp: new Date().toString(),
-            });
-          }
-        });
-        this.tcpStreamSocket.removeAllListeners();
-        this.tcpStreamSocket.destroy();
-        this.tcpStreamSocket = null;
-      }
-      this.clientCounter = 0;
-    }
   }
   /** Set the listeners for the livestream socket */
   setVideoSocketListeners(): void {
@@ -124,6 +81,7 @@ export class LiveStreamService {
       // Listen at port 50003 on any interface for video frame requests from front-end.
       this.frontEndStreamProvider = socketio.listen(
         http.createServer().listen(this.FrontEndStreamPort, '0.0.0.0'),
+        { transports: ['websocket'] },
       );
       this.dicer = new Dicer({ boundary: '--videoboundary' });
       //Dicer object will parse video data
@@ -148,6 +106,183 @@ export class LiveStreamService {
       this.frontEndStreamProvider?.emit('image', frameEncoded);
     });
   };
+  /** Send the python process a "start" message to connect the livestream pipeline
+   * to the main pipeline to start serving the webcam feed. */
+  startLiveStreamServer(): void {
+    this.clientCounter = this.clientCounter + 1;
+    if (this.clientCounter > 1) return;
+
+    this.pythonSocket.write('start', async error => {
+      if (error) {
+        console.log(error.message);
+        await this.errorLogService.insertEntry({
+          errorMessage: error.message,
+          errorSource: 'Node: Starting Python Client Socket',
+          timeStamp: new Date().toString(),
+        });
+      }
+    });
+  }
+  /** Stop the livestream server when there is only one client connect. Decrease client count otherwise.*/
+  stopLiveStreamServer(): void {
+    this.clientCounter = this.clientCounter - 1;
+    if (this.clientCounter > 0) return;
+
+    // Stop server once there are no clients that request livestream
+    if (this.frontEndStreamProvider) {
+      this.frontEndStreamProvider.close();
+      this.dicer.destroy();
+      this.frontEndStreamProvider = null;
+      this.dicer = null;
+    }
+
+    if (this.tcpStreamSocket) {
+      this.pythonSocket.write('stop', async error => {
+        if (error) {
+          await this.errorLogService.insertEntry({
+            errorMessage: error.message,
+            errorSource: 'Node: Stopping Python Client Socket',
+            timeStamp: new Date().toString(),
+          });
+        }
+      });
+      this.tcpStreamSocket.removeAllListeners();
+      this.tcpStreamSocket.destroy();
+      this.tcpStreamSocket = null;
+    }
+    this.clientCounter = 0;
+  }
+
+  /** Start the python gstreamer process to start the recording pipeline for the webcam. */
+  async startRecording(): Promise<void> {
+    const isRecording = await this.isRecording();
+    if (isRecording === false) {
+      // Retrieve DB data
+      const configData = await this.appSettingsService.retrieveData();
+      const camInfo = await this.getVideoOrientation(configData.camera);
+      // Update Recording State
+      await this.appSettingsService.update({ id: 1, recordingState: 'ON' });
+      // Start python gstreamer process
+      this.StreamProc = child.spawn('python3', [
+        './python/DashCam-Stream.py',
+        '127.0.0.1',
+        this.StreamPort.toString(),
+        configData.camera.replace(/\s+/g, '-'),
+        configData.Device,
+        camInfo.videoLength.toString(),
+        camInfo.verticalFlip.toString(),
+      ]);
+      // Catch subprocess start error
+      this.StreamProc.on('error', async err => {
+        // Log node error on python process
+        await this.errorLogService.insertEntry({
+          errorMessage: err.message,
+          errorSource: 'Node error: Failed to start python process',
+          timeStamp: new Date().toString(),
+        });
+        console.log('gstreamer process exited on error: ' + err.toString());
+        this.cleanExit();
+      });
+      // Catch unexpected errors that stopped the process such as 'address already in use'
+      this.StreamProc.on('close', async (code, signal) => {
+        this.StreamProc = null;
+        // The python process exits with error code 98, when
+        if (code === 98) {
+          // Attempt to kill the process python3 processes.
+          await this.errorLogService.insertEntry({
+            errorMessage:
+              `Python process exited on code 98. It could not create the communications ` +
+              `socket at port 10000 as another process is using it. Terminate the ` +
+              `process before attempting to record`,
+            errorSource:
+              'Python Process Close Event: [Err 98] Address already in use.',
+            timeStamp: new Date().toString(),
+          });
+          // When exiting on 0, it was a clean start and close. Catch other possible exit codes.
+        } else if (code !== 0) {
+          const signalmsg = signal !== null ? `, with signal: ${signal}` : '';
+          await this.errorLogService.insertEntry({
+            errorMessage: `The python process exited on code: ${code}${signalmsg}.`,
+            errorSource: 'Python process exit',
+            timeStamp: new Date().toString(),
+          });
+        }
+      });
+
+      // Process the python subprocess stdout messages
+      this.StreamProc.stdout?.on('data', (data: Buffer) => {
+        const response = data.toString('utf8').replace(/\s/g, '');
+        if (response == 'SocketCreated') {
+          this.createCommSocket();
+        } else if (response == 'ServerStarted') {
+          this.startLiveStreamSocket();
+        } else {
+          console.log(response);
+        }
+      });
+
+      // Catch the python subprocess stderr messages
+      this.StreamProc.stderr?.on('data', async (data: Buffer) => {
+        // Log error in the data base
+        await this.errorLogService.insertEntry({
+          errorMessage: data.toString(),
+          errorSource: 'Python Process Error',
+          timeStamp: new Date().toString(),
+        });
+        this.stopRecording();
+      });
+    }
+  }
+  /** Stop the python gstreamer process by sending SIGINT to allow its handler to
+   * cleanly finish recording the current video. Clean up the socket used to communicate
+   * to the python process.
+   */
+  async stopRecording(): Promise<void> {
+    await this.appSettingsService.update({ id: 1, recordingState: 'OFF' });
+    // Send SIGINT to python process to stop current video gracefully without corrupting it.
+    if (this.StreamProc) {
+      this.StreamProc.on('exit', () => {
+        console.log('Recording stopped. ');
+      });
+      this.StreamProc.kill('SIGINT');
+      this.StreamProc = null;
+    }
+    // Clean up node socket used to communicate with python
+    if (this.pythonSocket) {
+      this.pythonSocket.removeAllListeners();
+      this.pythonSocket.destroy();
+      this.pythonSocket = null;
+    }
+    // Clean up socket.io server used to send clients livestream feed
+    if (this.frontEndStreamProvider) {
+      this.frontEndStreamProvider.close();
+      this.frontEndStreamProvider = null;
+    }
+    // Clean up socket used to receive livestream feed from python process
+    if (this.tcpStreamSocket) {
+            timeStamp: new Date().toString(),
+      this.tcpStreamSocket.removeAllListeners();
+      this.tcpStreamSocket.destroy();
+      this.tcpStreamSocket = null;
+    }
+  }
+  /** Create the python socket used to start, stop, rotate and set video length for the
+   * gstreamer pipeline.
+   */
+  createCommSocket(): void {
+    this.pythonSocket = new net.Socket();
+    this.pythonSocket.connect(10000, '127.0.0.1');
+    this.pythonSocket.on('connect', () => {
+      console.log('Connected to python server');
+    });
+    this.pythonSocket.on('error', async error => {
+      await this.errorLogService.insertEntry({
+        errorMessage: error.message,
+        errorSource: 'Node: Error received from python gstreamer process',
+        timeStamp: new Date().toString(),
+      });
+    });
+  }
   /** Return the current orientation and length data from the database based on the input camera name.*/
   async getVideoOrientation(camera: string): Promise<CamInfo> {
     if (camera === 'Logitech Webcam HD C920') {
@@ -170,107 +305,23 @@ export class LiveStreamService {
       };
     }
   }
-  /** Start the python gstreamer process to start recording on the webcam. */
-  async startRecording(): Promise<void> {
-    if (this.isRecording === false) {
-      // Retrieve DB data
-      const configData = await this.appSettingsService.retrieveData();
-      const camInfo = await this.getVideoOrientation(configData.camera);
-      // Update Recording State
-      await this.appSettingsService.update({ id: 1, recordingState: 'ON' });
-      this.isRecording = true;
-      // Start python gstreamer process
-      this.StreamProc = child.spawn('python3', [
-        './python/DashCam-Stream.py',
-        '0.0.0.0',
-        this.StreamPort.toString(),
-        configData.camera.replace(/\s+/g, '-'),
-        configData.Device,
-        camInfo.videoLength.toString(),
-        camInfo.verticalFlip.toString(),
-      ]);
-      // Catch Process Connection errors
-      this.StreamProc.on('error', async err => {
-        await this.errorLogService.insertEntry({
-          errorMessage: err.message,
-          errorSource: 'Node: Python Process Start',
-          timeStamp: new Date().toString(),
-        });
-        console.log('gstreamer process exited on error: ' + err.toString());
-        this.cleanExit();
-      });
-
-      // View Process.stdout
-      this.StreamProc.stdout?.on('data', (data: Buffer) => {
-        const response = data.toString('utf8').replace(/\s/g, '');
-        if (response == 'SocketCreated') {
-          this.createCommSocket();
-        } else if (response == 'ServerStarted') {
-          this.startLiveStreamSocket();
-        } else {
-          console.log(response);
-        }
-      });
-      this.StreamProc.stderr?.on('data', async (data: Buffer) => {
-        await this.errorLogService.insertEntry({
-          errorMessage: data.toString(),
-          errorSource: 'Python Process',
-          timeStamp: new Date().toString(),
-        });
-        this.stopRecording();
-        console.log('Stderr from process: ' + data.toString());
-      });
-    }
-  }
-  /** Stop the python gstreamer process by sending SIGINT to allow its handler to
-   * cleanly finish recording the current video. Clean up the socket used to communicate
-   * to the python process.
-   */
-  async stopRecording(): Promise<void> {
-    await this.appSettingsService.update({ id: 1, recordingState: 'OFF' });
-    this.isRecording = false;
+  /** Return the recording state based on the child process state */
+  async isPythonProcessRunning(): Promise<boolean> {
     if (this.StreamProc) {
-      this.StreamProc.on('exit', () => {
-        console.log('Recording stopped. ');
-      });
-      this.StreamProc.kill('SIGINT');
-      this.StreamProc = null;
-    }
-    if (this.frontEndStreamProvider) {
-      this.frontEndStreamProvider.close();
-      this.frontEndStreamProvider = null;
-    }
-    if (this.tcpStreamSocket) {
-      this.pythonSocket.write('stop', async error => {
-        if (error) {
-          await this.errorLogService.insertEntry({
-            errorMessage: error.message,
-            errorSource: 'Node: Stopping Python Client Socket',
-            timeStamp: new Date().toString(),
-          });
-        }
-      });
-      this.tcpStreamSocket.removeAllListeners();
-      this.tcpStreamSocket.destroy();
-      this.tcpStreamSocket = null;
+      await this.appSettingsService.update({ id: 1, recordingState: 'ON' });
+      return true;
+    } else {
+      await this.appSettingsService.update({ id: 1, recordingState: 'OFF' });
+      return false;
     }
   }
-  /** Create the python socket used to start, stop, rotate and set video length for the
-   * gstreamer pipeline.
-   */
-  createCommSocket(): void {
-    this.pythonSocket = new net.Socket();
-    this.pythonSocket.connect(10000, '127.0.0.1', () => {
-      console.log('Connected to python server');
-    });
-    this.pythonSocket.on('error', async error => {
-      await this.errorLogService.insertEntry({
-        errorMessage: error.message,
-        errorSource: 'Node: Error received from python gstreamer process',
-        timeStamp: new Date().toString(),
-      });
-    });
+  /** Return the recording state based on the value in the database */
+  async isRecording(): Promise<boolean> {
+    const settings = await this.appSettingsService.retrieveData();
+    if (settings.recordingState == 'OFF') return false;
+    else return true;
   }
+
   /** Update the video length for the python gstreamer process.*/
   updateVideoLength(command: string): void {
     this.pythonSocket.write(command, async error => {
@@ -306,8 +357,8 @@ export class LiveStreamService {
           timeStamp: new Date().toString(),
         });
         if (this.errCount < 2) {
+          this.frontEndStreamProvider.emit('v4l2-error');
           this.stopLiveStreamServer();
-          this.clientCounter = 0;
         } else {
           this.errCount = 0;
         }

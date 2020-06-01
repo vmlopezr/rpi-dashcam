@@ -12,7 +12,11 @@ can also be streamed to allow users to see the live feed while adjusting webcam 
 There is initial support for Logitech C920 and Microsoft LifeCam HD3000.
 The application should be able to record with v4l2-compatible webcams.
 
-The live video streaming with camera settings is only supported for the Logitect C920 and Microsoft LifeCam HD3000. The camera settings are disabled for other cameras, although the stream will be available.
+The live video streaming with camera settings is only supported for the Logitect C920 and Microsoft LifeCam HD3000. The application should be able to record with UVC, v4l2 [compatible devices](https://www.ideasonboard.org/uvc/), but only support updating video length and orientation.
+
+The Logitech C920, and Microsoft LifeCam HD 3000 are set to record at 720p 30fps, while other cameras at 720p 20fps.
+
+**Note:** Depending on the camera, the automatic settings such as automatic exposure, white balance, etc. may cause the camera to drop frame rate.
 
 The current the repository contains the backend server using nestJS.
 Before running the server, the static files for the page must be unzipped

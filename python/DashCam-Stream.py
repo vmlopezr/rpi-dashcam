@@ -235,12 +235,13 @@ class WebcamRecord():
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.socket.bind((IP_Address, 10000))
             self.socket.listen(1)
+            print("SocketCreated")
+            sys.stdout.flush()
         except socket.error as serr:
             print(serr, file=sys.stderr)
             sys.stderr.flush()
-
-        print("SocketCreated")
-        sys.stdout.flush()
+            # Exit with error code 98 to alert node that address is in use
+            sys.exit(98)
 
     def socket_listener(self, sock, *args):
         # Asynchronous connection listener. Set up handler for the connection.

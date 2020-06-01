@@ -6,6 +6,10 @@ import { Data } from '../services/livestream.service';
 export class LiveStreamController {
   constructor(private livestreamService: LiveStreamService) {}
 
+  @Get('/isPythonRunning')
+  checkPythonProcess(): Promise<boolean> {
+    return this.livestreamService.isPythonProcessRunning();
+  }
   @Get('/stopRecording')
   stopRecording(): void {
     this.livestreamService.stopRecording();
