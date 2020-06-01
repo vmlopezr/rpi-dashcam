@@ -62,8 +62,8 @@ export class LiveStreamService {
   async cleanExit(): Promise<void> {
     this.appSettingsService.update({ recordingState: 'OFF' });
 
-    this.StreamProc.kill('SIGINT');
-    this.StreamProc.on('exit', () => {
+    this.StreamProc?.kill('SIGINT');
+    this.StreamProc?.on('exit', () => {
       console.log('python process exited ');
     });
     this.StreamProc = null;
@@ -77,7 +77,7 @@ export class LiveStreamService {
   /** Set the listeners for the livestream socket */
   setVideoSocketListeners(): void {
     // Connect to gstreamer tcp socket at port 50002. solely communicates to python.
-    this.tcpStreamSocket.connect(this.StreamPort, '127.0.0.1', () => {
+    this.tcpStreamSocket?.connect(this.StreamPort, '127.0.0.1', () => {
       // Listen at port 50003 on any interface for video frame requests from front-end.
       this.frontEndStreamProvider = socketio.listen(
         http.createServer().listen(this.FrontEndStreamPort, '0.0.0.0'),
@@ -103,7 +103,7 @@ export class LiveStreamService {
     });
     // Send the frame
     part.on('end', () => {
-      this.frontEndStreamProvider?.emit('image', frameEncoded);
+      this.frontEndStreamProvider.emit('image', frameEncoded);
     });
   };
   /** Send the python process a "start" message to connect the livestream pipeline
@@ -112,7 +112,7 @@ export class LiveStreamService {
     this.clientCounter = this.clientCounter + 1;
     if (this.clientCounter > 1) return;
 
-    this.pythonSocket.write('start', async error => {
+    this.pythonSocket?.write('start', async error => {
       if (error) {
         console.log(error.message);
         await this.errorLogService.insertEntry({
@@ -173,7 +173,7 @@ export class LiveStreamService {
         camInfo.verticalFlip.toString(),
       ]);
       // Catch subprocess start error
-      this.StreamProc.on('error', async err => {
+      this.StreamProc?.on('error', async err => {
         // Log node error on python process
         await this.errorLogService.insertEntry({
           errorMessage: err.message,
@@ -184,7 +184,7 @@ export class LiveStreamService {
         this.cleanExit();
       });
       // Catch unexpected errors that stopped the process such as 'address already in use'
-      this.StreamProc.on('close', async (code, signal) => {
+      this.StreamProc?.on('close', async (code, signal) => {
         this.StreamProc = null;
         // The python process exits with error code 98, when
         if (code === 98) {
@@ -210,7 +210,7 @@ export class LiveStreamService {
       });
 
       // Process the python subprocess stdout messages
-      this.StreamProc.stdout?.on('data', (data: Buffer) => {
+      this.StreamProc?.stdout?.on('data', (data: Buffer) => {
         const response = data.toString('utf8').replace(/\s/g, '');
         if (response == 'SocketCreated') {
           this.createCommSocket();
@@ -222,7 +222,7 @@ export class LiveStreamService {
       });
 
       // Catch the python subprocess stderr messages
-      this.StreamProc.stderr?.on('data', async (data: Buffer) => {
+      this.StreamProc?.stderr?.on('data', async (data: Buffer) => {
         // Log error in the data base
         await this.errorLogService.insertEntry({
           errorMessage: data.toString(),
@@ -270,17 +270,19 @@ export class LiveStreamService {
    */
   createCommSocket(): void {
     this.pythonSocket = new net.Socket();
-    this.pythonSocket.connect(10000, '127.0.0.1');
-    this.pythonSocket.on('connect', () => {
-      console.log('Connected to python server');
-    });
-    this.pythonSocket.on('error', async error => {
-      await this.errorLogService.insertEntry({
-        errorMessage: error.message,
-        errorSource: 'Node: Error received from python gstreamer process',
-        timeStamp: new Date().toString(),
+    if (this.pythonSocket) {
+      this.pythonSocket.connect(10000, '127.0.0.1');
+      this.pythonSocket.on('connect', () => {
+        console.log('Connected to python server');
       });
-    });
+      this.pythonSocket.on('error', async error => {
+        await this.errorLogService.insertEntry({
+          errorMessage: error.message,
+          errorSource: 'Node: Error received from python gstreamer process',
+          timeStamp: new Date().toString(),
+        });
+      });
+    }
   }
   /** Return the current orientation and length data from the database based on the input camera name.*/
   async getVideoOrientation(camera: string): Promise<CamInfo> {
@@ -323,7 +325,7 @@ export class LiveStreamService {
 
   /** Update the video length for the python gstreamer process.*/
   updateVideoLength(command: string): void {
-    this.pythonSocket.write(command, async error => {
+    this.pythonSocket?.write(command, async error => {
       if (error) {
         await this.errorLogService.insertEntry({
           errorMessage: error.message,
@@ -335,7 +337,7 @@ export class LiveStreamService {
   }
   /** Send command to the python gstreamer pipeline to rotate the video feed vertically by 180 degrees.*/
   rotateStream(verticalFlip: number): void {
-    this.pythonSocket.write('flip ' + verticalFlip, async error => {
+    this.pythonSocket?.write('flip ' + verticalFlip, async error => {
       if (error) {
         await this.errorLogService.insertEntry({
           errorMessage: error.message,
@@ -356,7 +358,7 @@ export class LiveStreamService {
           timeStamp: new Date().toString(),
         });
         if (this.errCount < 2) {
-          this.frontEndStreamProvider.emit('v4l2-error');
+          this.frontEndStreamProvider?.emit('v4l2-error');
           this.stopLiveStreamServer();
         } else {
           this.errCount = 0;
