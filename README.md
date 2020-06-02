@@ -7,8 +7,9 @@ The application serves a static website that allows control of the USB Webcam. T
 Raspberry Pi is configured as an Access Point, so devices must be connected to the network.
 Recorded videos can be watched as well as downloaded onto your devices.
 
-Supported webcams
-can also be streamed to allow users to see the live feed while adjusting webcam settings.
+A Demo of this can be seen at: https://vmlopezr.github.io/rpi-dashcam-front-end/
+
+Supported webcams can also be streamed to allow users to see the live feed while adjusting webcam settings.
 There is initial support for Logitech C920 and Microsoft LifeCam HD3000.
 The application should be able to record with v4l2-compatible webcams.
 
@@ -93,7 +94,6 @@ sudo sh rpi-network-install.sh
 **Why sudo?:** The install commands need sudo credentials to install the packages as well as update package configuration files for those packages. The script is intended to
 set up the Raspberry Pi as a Wifi Access Point.
 The script will:
-0
 
 - Install `v4l2-utils` - Used to interface with UVC webcams as well as update camera settings.
 - Install `iptables-persistent` - Used to make the new iptables rules persistent.
